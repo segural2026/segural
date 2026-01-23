@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista General</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1f3c88;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #1f3c88;
+            color: white;
+        }
+        .total {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #c0392b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .ganancia {
+            font-weight: bold;
+        }
+        .positiva { color: green; }
+        .negativa { color: red; }
+    </style>
+</head>
+<body>
+
+<h1>📋 Lista general</h1>
+
+<h2>🧰 Trabajos</h2>
+<p class="total" id="totalTrabajos"></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Descripción</th>
+            <th>Cliente</th>
+            <th>Ingreso</th>
+            <th>Gastos</th>
+            <th>Ganancia</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody id="tablaTrabajos"></tbody>
+</table>
+
+<a href="index.html">⬅ Volver al inicio</a>
+
+<script>
+    let trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
+    const tabla = document.getElementById("tablaTrabajos");
+    const totalTrabajos = document.getElementById("totalTrabajos");
+
+    let totalGanancia = 0;
+
+    trabajos.forEach((trabajo, index) => {
+        const ingreso = Number(trabajo.monto);
+        const gastos = Number(trabajo.gastos);
+        const ganancia = ingreso - gastos;
+        totalGanancia += ganancia;
+
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${trabajo.descripcion}</td>
+            <td>${trabajo.cliente}</td>
+            <td>$${ingreso}</td>
+            <td>$${gastos}</td>
+            <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia}</td>
+            <td>${trabajo.fecha}</td>
+            <td>${trabajo.estado}</td>
+            <td><button onclick="eliminarTrabajo(${index})">Eliminar</button></td>
+        `;
+        tabla.appendChild(fila);
+    });
+
+    totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia}`;
+
+    function eliminarTrabajo(index) {
+        if (!confirm("¿Eliminar este trabajo?")) return;
+        trabajos.splice(index, 1);
+        localStorage.setItem("trabajos", JSON.stringify(trabajos));
+        location.reload();
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Trabajos</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1f3c88;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            background-color: #1f3c88;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #162a5c;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #1f3c88;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🧰 Nuevo trabajo</h1>
+
+<form id="formTrabajo">
+    <label>Descripción del trabajo</label>
+    <input type="text" id="descripcion" required>
+
+    <label>Cliente</label>
+    <input type="text" id="cliente" required>
+
+    <label>Dinero cobrado</label>
+    <input type="number" id="monto" required>
+
+    <label>Gastos del trabajo</label>
+    <input type="number" id="gastosTrabajo" placeholder="Ej: materiales, traslado">
+
+    <label>Fecha</label>
+    <input type="date" id="fecha" required>
+
+    <label>Estado</label>
+    <select id="estado">
+        <option value="Pendiente">Pendiente</option>
+        <option value="En proceso">En proceso</option>
+        <option value="Finalizado">Finalizado</option>
+    </select>
+
+    <button type="submit">Guardar trabajo</button>
+</form>
+
+<a href="index.html">⬅ Volver al inicio</a>
+
+<script>
+    document.getElementById("formTrabajo").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const trabajo = {
+            descripcion: document.getElementById("descripcion").value,
+            cliente: document.getElementById("cliente").value,
+            monto: document.getElementById("monto").value,
+            gastos: document.getElementById("gastosTrabajo").value || 0,
+            fecha: document.getElementById("fecha").value,
+            estado: document.getElementById("estado").value
+        };
+
+        let trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
+        trabajos.push(trabajo);
+        localStorage.setItem("trabajos", JSON.stringify(trabajos));
+
+        alert("✅ Trabajo guardado correctamente");
+
+        document.getElementById("formTrabajo").reset();
+    });
+</script>
+
+</body>
+</html>
