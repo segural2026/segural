@@ -1,47 +1,71 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clientes - SEGURAL</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - SEGURAL</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f1e4a;
-    color: white;
-    margin: 0;
-    padding: 20px;
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f1e4a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-.cliente {
-    background: rgba(255,255,255,0.1);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
+        .cliente {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
 
-.cliente p {
-    margin: 6px 0;
-}
+        .cliente p {
+            margin: 6px 0;
+        }
 
-.volver {
-    text-align: center;
-    margin-top: 20px;
-}
+        .botones {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
 
-.volver a {
-    color: white;
-    text-decoration: underline;
-}
-</style>
+        button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .editar {
+            background: #ffc107;
+            color: black;
+        }
+
+        .eliminar {
+            background: #dc3545;
+            color: white;
+        }
+
+        .volver {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .volver a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
 </head>
-
 <body>
 
 <h1>👤 Clientes</h1>
@@ -53,22 +77,67 @@ h1 {
 </div>
 
 <script>
-const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-const contenedor = document.getElementById("listaClientes");
+let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
-if (clientes.length === 0) {
-    contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
-} else {
-    clientes.forEach((c, i) => {
-        contenedor.innerHTML += `
-            <div class="cliente">
-                <p><strong>Cliente:</strong> ${c.nombre}</p>
-                <p><strong>Dirección:</strong> ${c.direccion || "-"}</p>
-                <p><strong>Teléfono:</strong> ${c.telefono || "-"}</p>
+function mostrarClientes() {
+    const contenedor = document.getElementById("listaClientes");
+    contenedor.innerHTML = "";
+
+    if (clientes.length === 0) {
+        contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
+        return;
+    }
+
+    clientes.forEach((cliente, index) => {
+        const div = document.createElement("div");
+        div.className = "cliente";
+
+        div.innerHTML = `
+            <p><strong>Cliente:</strong> ${cliente.nombre || "-"}</p>
+            <p><strong>Dirección:</strong> ${cliente.direccion || "-"}</p>
+            <p><strong>Teléfono:</strong> ${cliente.telefono || "-"}</p>
+
+            <div class="botones">
+                <button class="editar" onclick="editarCliente(${index})">✏ Editar</button>
+                <button class="eliminar" onclick="eliminarCliente(${index})">🗑 Eliminar</button>
             </div>
         `;
+
+        contenedor.appendChild(div);
     });
 }
+
+function eliminarCliente(index) {
+    if (confirm("¿Seguro que querés eliminar este cliente?")) {
+        clientes.splice(index, 1);
+        localStorage.setItem("clientes", JSON.stringify(clientes));
+        mostrarClientes();
+    }
+}
+
+function editarCliente(index) {
+    const cliente = clientes[index];
+
+    const nuevoNombre = prompt("Editar nombre:", cliente.nombre);
+    if (nuevoNombre === null) return;
+
+    const nuevaDireccion = prompt("Editar dirección:", cliente.direccion);
+    if (nuevaDireccion === null) return;
+
+    const nuevoTelefono = prompt("Editar teléfono:", cliente.telefono);
+    if (nuevoTelefono === null) return;
+
+    clientes[index] = {
+        nombre: nuevoNombre,
+        direccion: nuevaDireccion,
+        telefono: nuevoTelefono
+    };
+
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    mostrarClientes();
+}
+
+mostrarClientes();
 </script>
 
 </body>
