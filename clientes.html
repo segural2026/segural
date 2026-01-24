@@ -168,96 +168,104 @@
     </div>
 </div>
 
-<script>
-let clientes = [];
+<!-- Firebase -->
+<script type="module">
+    // Importa Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-// Cargar clientes de Firestore si quieres, por ahora localStorage
-clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    // Config de tu proyecto Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+        authDomain: "segural.firebaseapp.com",
+        projectId: "segural",
+        storageBucket: "segural.appspot.com",
+        messagingSenderId: "446640175127",
+        appId: "1:446640175127:web:479a11474a70be0d604452"
+    };
 
-function guardarClientes() {
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-    mostrarClientes();
-}
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-function mostrarClientes() {
-    const contenedor = document.getElementById("listaClientes");
-    contenedor.innerHTML = "";
+    const listaClientes = document.getElementById("listaClientes");
+    const modal = document.getElementById("modalCliente");
+    const btnAgregar = document.getElementById("btnAgregarCliente");
+    const btnCerrar = document.getElementById("cerrarModal");
+    const btnGuardar = document.getElementById("guardarCliente");
 
-    if(clientes.length === 0){
-        contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
-        return;
-    }
+    btnAgregar.addEventListener("click", () => modal.style.display = "flex");
+    btnCerrar.addEventListener("click", () => modal.style.display = "none");
 
-    clientes.forEach((c, index) => {
-        const div = document.createElement("div");
-        div.className = "cliente";
-        div.innerHTML = `
-            <p><strong>Cliente:</strong> ${c.nombre}</p>
-            <p><strong>Dirección:</strong> ${c.direccion}</p>
-            <p><strong>Teléfono:</strong> ${c.telefono}</p>
-            <div class="acciones">
-                <button class="editar" onclick="editarCliente(${index})">Editar</button>
-                <button class="eliminar" onclick="eliminarCliente(${index})">Eliminar</button>
-            </div>
-        `;
-        contenedor.appendChild(div);
+    // Guardar cliente en Firestore
+    btnGuardar.addEventListener("click", async () => {
+        const nombre = document.getElementById("inputNombre").value.trim();
+        const direccion = document.getElementById("inputDireccion").value.trim();
+        const telefono = document.getElementById("inputTelefono").value.trim();
+
+        if (!nombre || !direccion || !telefono) {
+            alert("Por favor completa todos los campos");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
+            alert("Cliente guardado ✔");
+            document.getElementById("inputNombre").value = "";
+            document.getElementById("inputDireccion").value = "";
+            document.getElementById("inputTelefono").value = "";
+            modal.style.display = "none";
+            mostrarClientes();
+        } catch (error) {
+            console.error("Error agregando cliente: ", error);
+        }
     });
-}
 
-function editarCliente(index){
-    const c = clientes[index];
-    const nombre = prompt("Editar nombre y apellido:", c.nombre);
-    if(!nombre) return;
-    const direccion = prompt("Editar dirección:", c.direccion);
-    if(!direccion) return;
-    const telefono = prompt("Editar teléfono:", c.telefono);
-    if(!telefono) return;
-
-    clientes[index] = {nombre, direccion, telefono};
-    guardarClientes();
-}
-
-function eliminarCliente(index){
-    if(confirm("¿Eliminar este cliente?")){
-        clientes.splice(index,1);
-        guardarClientes();
-    }
-}
-
-// Modal
-const modal = document.getElementById("modalCliente");
-const btnAgregar = document.getElementById("btnAgregarCliente");
-const btnCerrar = document.getElementById("cerrarModal");
-const btnGuardar = document.getElementById("guardarCliente");
-
-btnAgregar.addEventListener("click", () => modal.style.display = "flex");
-btnCerrar.addEventListener("click", () => modal.style.display = "none");
-
-btnGuardar.addEventListener("click", () => {
-    const nombre = document.getElementById("inputNombre").value.trim();
-    const direccion = document.getElementById("inputDireccion").value.trim();
-    const telefono = document.getElementById("inputTelefono").value.trim();
-
-    if(!nombre || !direccion || !telefono){
-        alert("Por favor completa todos los campos");
-        return;
+    // Mostrar clientes desde Firestore
+    async function mostrarClientes() {
+        listaClientes.innerHTML = "";
+        try {
+            const querySnapshot = await getDocs(collection(db, "clientes"));
+            if (querySnapshot.empty) {
+                listaClientes.innerHTML = "<p>No hay clientes cargados.</p>";
+                return;
+            }
+            querySnapshot.forEach((docSnap) => {
+                const c = docSnap.data();
+                const div = document.createElement("div");
+                div.className = "cliente";
+                div.innerHTML = `
+                    <p><strong>Cliente:</strong> ${c.nombre}</p>
+                    <p><strong>Dirección:</strong> ${c.direccion}</p>
+                    <p><strong>Teléfono:</strong> ${c.telefono}</p>
+                    <div class="acciones">
+                        <button class="eliminar" onclick="eliminarCliente('${docSnap.id}')">Eliminar</button>
+                    </div>
+                `;
+                listaClientes.appendChild(div);
+            });
+        } catch (error) {
+            console.error("Error cargando clientes: ", error);
+        }
     }
 
-    clientes.push({nombre, direccion, telefono});
-    guardarClientes();
+    // Eliminar cliente desde Firestore
+    window.eliminarCliente = async function(id) {
+        if (!confirm("¿Eliminar este cliente?")) return;
+        try {
+            await deleteDoc(doc(db, "clientes", id));
+            mostrarClientes();
+        } catch (error) {
+            console.error("Error eliminando cliente: ", error);
+        }
+    }
 
-    // Limpiar inputs y cerrar modal
-    document.getElementById("inputNombre").value = "";
-    document.getElementById("inputDireccion").value = "";
-    document.getElementById("inputTelefono").value = "";
-    modal.style.display = "none";
-});
+    mostrarClientes();
 
-window.addEventListener("click", (e) => {
-    if(e.target === modal) modal.style.display = "none";
-});
+    // Cerrar modal al hacer click fuera
+    window.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+    });
 
-mostrarClientes();
 </script>
 
 </body>
