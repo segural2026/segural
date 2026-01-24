@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes - SEGURAL</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f1e4a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.cliente {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.cliente p {
+    margin: 6px 0;
+}
+
+.volver {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.volver a {
+    color: white;
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<h1>👤 Clientes</h1>
+
+<div id="listaClientes"></div>
+
+<div class="volver">
+    <a href="index.html">⬅ Volver al inicio</a>
+</div>
+
+<script>
+const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+const contenedor = document.getElementById("listaClientes");
+
+if (clientes.length === 0) {
+    contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
+} else {
+    clientes.forEach((c, i) => {
+        contenedor.innerHTML += `
+            <div class="cliente">
+                <p><strong>Cliente:</strong> ${c.nombre}</p>
+                <p><strong>Dirección:</strong> ${c.direccion || "-"}</p>
+                <p><strong>Teléfono:</strong> ${c.telefono || "-"}</p>
+            </div>
+        `;
+    });
+}
+</script>
+
+</body>
+</html>
