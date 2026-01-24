@@ -14,9 +14,27 @@
             padding: 20px;
         }
 
-        h1 {
-            text-align: center;
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .btn-agregar {
+            font-size: 28px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: white;
+            color: #0f1e4a;
+            font-weight: bold;
         }
 
         .cliente {
@@ -30,28 +48,27 @@
             margin: 6px 0;
         }
 
-        .botones {
+        .acciones {
             margin-top: 10px;
             display: flex;
             gap: 10px;
         }
 
-        button {
-            flex: 1;
-            padding: 10px;
+        .acciones button {
+            padding: 8px 12px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 14px;
         }
 
         .editar {
-            background: #ffc107;
-            color: black;
+            background: #e0e0e0;
+            color: #000;
         }
 
         .eliminar {
-            background: #dc3545;
+            background: #444;
             color: white;
         }
 
@@ -68,7 +85,10 @@
 </head>
 <body>
 
-<h1>👤 Clientes</h1>
+<header>
+    <h1>👤 Clientes</h1>
+    <button class="btn-agregar" onclick="agregarCliente()">+</button>
+</header>
 
 <div id="listaClientes"></div>
 
@@ -79,6 +99,10 @@
 <script>
 let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
+function guardar() {
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+}
+
 function mostrarClientes() {
     const contenedor = document.getElementById("listaClientes");
     contenedor.innerHTML = "";
@@ -88,18 +112,18 @@ function mostrarClientes() {
         return;
     }
 
-    clientes.forEach((cliente, index) => {
+    clientes.forEach((c, index) => {
         const div = document.createElement("div");
         div.className = "cliente";
 
         div.innerHTML = `
-            <p><strong>Cliente:</strong> ${cliente.nombre || "-"}</p>
-            <p><strong>Dirección:</strong> ${cliente.direccion || "-"}</p>
-            <p><strong>Teléfono:</strong> ${cliente.telefono || "-"}</p>
+            <p><strong>Cliente:</strong> ${c.nombre}</p>
+            <p><strong>Dirección:</strong> ${c.direccion}</p>
+            <p><strong>Teléfono:</strong> ${c.telefono}</p>
 
-            <div class="botones">
-                <button class="editar" onclick="editarCliente(${index})">✏ Editar</button>
-                <button class="eliminar" onclick="eliminarCliente(${index})">🗑 Eliminar</button>
+            <div class="acciones">
+                <button class="editar" onclick="editarCliente(${index})">Editar</button>
+                <button class="eliminar" onclick="eliminarCliente(${index})">Eliminar</button>
             </div>
         `;
 
@@ -107,34 +131,44 @@ function mostrarClientes() {
     });
 }
 
-function eliminarCliente(index) {
-    if (confirm("¿Seguro que querés eliminar este cliente?")) {
-        clientes.splice(index, 1);
-        localStorage.setItem("clientes", JSON.stringify(clientes));
-        mostrarClientes();
-    }
+function agregarCliente() {
+    const nombre = prompt("Nombre y apellido:");
+    if (!nombre) return;
+
+    const direccion = prompt("Dirección:");
+    if (!direccion) return;
+
+    const telefono = prompt("Número de teléfono:");
+    if (!telefono) return;
+
+    clientes.push({ nombre, direccion, telefono });
+    guardar();
+    mostrarClientes();
 }
 
 function editarCliente(index) {
-    const cliente = clientes[index];
+    const c = clientes[index];
 
-    const nuevoNombre = prompt("Editar nombre:", cliente.nombre);
-    if (nuevoNombre === null) return;
+    const nombre = prompt("Editar nombre y apellido:", c.nombre);
+    if (!nombre) return;
 
-    const nuevaDireccion = prompt("Editar dirección:", cliente.direccion);
-    if (nuevaDireccion === null) return;
+    const direccion = prompt("Editar dirección:", c.direccion);
+    if (!direccion) return;
 
-    const nuevoTelefono = prompt("Editar teléfono:", cliente.telefono);
-    if (nuevoTelefono === null) return;
+    const telefono = prompt("Editar teléfono:", c.telefono);
+    if (!telefono) return;
 
-    clientes[index] = {
-        nombre: nuevoNombre,
-        direccion: nuevaDireccion,
-        telefono: nuevoTelefono
-    };
-
-    localStorage.setItem("clientes", JSON.stringify(clientes));
+    clientes[index] = { nombre, direccion, telefono };
+    guardar();
     mostrarClientes();
+}
+
+function eliminarCliente(index) {
+    if (confirm("¿Eliminar este cliente?")) {
+        clientes.splice(index, 1);
+        guardar();
+        mostrarClientes();
+    }
 }
 
 mostrarClientes();
