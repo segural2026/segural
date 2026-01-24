@@ -1,87 +1,78 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - SEGURAL</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes - SEGURAL</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f1e4a;
+        color: white;
+        margin: 0;
+        padding: 20px;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f1e4a;
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+    h1 { margin: 0; }
 
-        h1 {
-            margin: 0;
-        }
+    .btn-agregar {
+        font-size: 28px;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        background: white;
+        color: #0f1e4a;
+        font-weight: bold;
+        transition: transform 0.2s ease;
+    }
 
-        .btn-agregar {
-            font-size: 28px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            background: white;
-            color: #0f1e4a;
-            font-weight: bold;
-        }
+    .btn-agregar:hover { transform: scale(1.1); }
 
-        .cliente {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
+    .cliente {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
 
-        .cliente p {
-            margin: 6px 0;
-        }
+    .cliente p { margin: 6px 0; }
 
-        .acciones {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-        }
+    .acciones {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+    }
 
-        .acciones button {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    .acciones button {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
 
-        .editar {
-            background: #e0e0e0;
-            color: #000;
-        }
+    .editar { background: #e0e0e0; color: #000; }
+    .eliminar { background: #444; color: white; }
 
-        .eliminar {
-            background: #444;
-            color: white;
-        }
+    .volver {
+        margin-top: 25px;
+        text-align: center;
+    }
 
-        .volver {
-            margin-top: 25px;
-            text-align: center;
-        }
-
-        .volver a {
-            color: white;
-            text-decoration: underline;
-        }
-    </style>
+    .volver a {
+        color: white;
+        text-decoration: underline;
+    }
+</style>
 </head>
 <body>
 
@@ -96,101 +87,84 @@
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
+<!-- Firebase -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  // Importar Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
 
-const firebaseConfig = {
+  // Configuración de tu proyecto
+  const firebaseConfig = {
     apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
     authDomain: "segural.firebaseapp.com",
     projectId: "segural",
     storageBucket: "segural.firebasestorage.app",
     messagingSenderId: "446640175127",
     appId: "1:446640175127:web:479a11474a70be0d604452"
-};
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-const listaClientesDiv = document.getElementById("listaClientes");
+  const clientesCol = collection(db, "clientes");
+  const listaClientes = document.getElementById("listaClientes");
 
-// Mostrar clientes
-async function mostrarClientes() {
-    listaClientesDiv.innerHTML = "";
-    const snapshot = await getDocs(collection(db, "clientes"));
-
-    snapshot.forEach(docSnap => {
-        const c = { id: docSnap.id, ...docSnap.data() };
-        const div = document.createElement("div");
-        div.className = "cliente";
-
-        div.innerHTML = `
+  // Mostrar clientes en tiempo real
+  onSnapshot(clientesCol, (snapshot) => {
+      listaClientes.innerHTML = "";
+      if (snapshot.empty) {
+          listaClientes.innerHTML = "<p>No hay clientes cargados.</p>";
+          return;
+      }
+      snapshot.forEach(docSnap => {
+          const c = docSnap.data();
+          const div = document.createElement("div");
+          div.className = "cliente";
+          div.innerHTML = `
             <p><strong>Cliente:</strong> ${c.nombre}</p>
             <p><strong>Dirección:</strong> ${c.direccion}</p>
             <p><strong>Teléfono:</strong> ${c.telefono}</p>
-
             <div class="acciones">
-                <button class="editar" onclick="editarCliente('${c.id}', '${c.nombre}', '${c.direccion}', '${c.telefono}')">Editar</button>
-                <button class="eliminar" onclick="eliminarCliente('${c.id}')">Eliminar</button>
+                <button class="editar" onclick="editarCliente('${docSnap.id}', '${c.nombre}', '${c.direccion}', '${c.telefono}')">Editar</button>
+                <button class="eliminar" onclick="eliminarCliente('${docSnap.id}')">Eliminar</button>
             </div>
-        `;
+          `;
+          listaClientes.appendChild(div);
+      });
+  });
 
-        listaClientesDiv.appendChild(div);
-    });
-}
+  // Agregar cliente
+  window.agregarCliente = async function() {
+      const nombre = prompt("Nombre y apellido del cliente:");
+      if (!nombre) return;
+      const direccion = prompt("Dirección del cliente:");
+      if (!direccion) return;
+      const telefono = prompt("Número de teléfono:");
+      if (!telefono) return;
 
-// Agregar cliente
-window.agregarCliente = async function() {
-    const nombre = prompt("Nombre y apellido:");
-    if (!nombre) return;
+      await addDoc(clientesCol, { nombre, direccion, telefono });
+  }
 
-    const direccion = prompt("Dirección:");
-    if (!direccion) return;
+  // Editar cliente
+  window.editarCliente = async function(id, oldNombre, oldDireccion, oldTelefono) {
+      const nombre = prompt("Editar nombre y apellido:", oldNombre);
+      if (!nombre) return;
+      const direccion = prompt("Editar dirección:", oldDireccion);
+      if (!direccion) return;
+      const telefono = prompt("Editar teléfono:", oldTelefono);
+      if (!telefono) return;
 
-    const telefono = prompt("Número de teléfono:");
-    if (!telefono) return;
+      const clienteRef = doc(db, "clientes", id);
+      await updateDoc(clienteRef, { nombre, direccion, telefono });
+  }
 
-    try {
-        await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
-        mostrarClientes();
-    } catch (err) {
-        alert("Error agregando cliente: " + err.message);
-    }
-};
-
-// Editar cliente
-window.editarCliente = async function(id, nombreOld, direccionOld, telefonoOld) {
-    const nombre = prompt("Editar nombre y apellido:", nombreOld);
-    if (!nombre) return;
-
-    const direccion = prompt("Editar dirección:", direccionOld);
-    if (!direccion) return;
-
-    const telefono = prompt("Editar teléfono:", telefonoOld);
-    if (!telefono) return;
-
-    try {
-        await updateDoc(doc(db, "clientes", id), { nombre, direccion, telefono });
-        mostrarClientes();
-    } catch (err) {
-        alert("Error editando cliente: " + err.message);
-    }
-};
-
-// Eliminar cliente
-window.eliminarCliente = async function(id) {
-    if (!confirm("¿Eliminar este cliente?")) return;
-
-    try {
-        await deleteDoc(doc(db, "clientes", id));
-        mostrarClientes();
-    } catch (err) {
-        alert("Error eliminando cliente: " + err.message);
-    }
-};
-
-// Cargar clientes al iniciar
-mostrarClientes();
+  // Eliminar cliente
+  window.eliminarCliente = async function(id) {
+      if (confirm("¿Eliminar este cliente?")) {
+          const clienteRef = doc(db, "clientes", id);
+          await deleteDoc(clienteRef);
+      }
+  }
 </script>
 
 </body>
