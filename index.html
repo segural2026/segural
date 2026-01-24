@@ -200,11 +200,23 @@
 
 <script>
     const claveCorrecta = "pandorasbox3060";
+    const TIEMPO_SESION = 2 * 60 * 60 * 1000; // 2 horas
+
+    function verificarSesion() {
+        const ultimaSesion = localStorage.getItem("ultimaSesion");
+        const ahora = Date.now();
+
+        if (ultimaSesion && (ahora - ultimaSesion) < TIEMPO_SESION) {
+            document.getElementById("overlay").style.display = "none";
+            document.getElementById("contenido").style.display = "block";
+        }
+    }
 
     function verificarClave() {
         const clave = document.getElementById("clave").value;
 
         if (clave === claveCorrecta) {
+            localStorage.setItem("ultimaSesion", Date.now());
             document.getElementById("overlay").style.display = "none";
             document.getElementById("contenido").style.display = "block";
         } else {
@@ -217,12 +229,13 @@
         input.type = input.type === "password" ? "text" : "password";
     }
 
-    // ENTER para ingresar
     document.getElementById("clave").addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
             verificarClave();
         }
     });
+
+    verificarSesion();
 </script>
 
 </body>
