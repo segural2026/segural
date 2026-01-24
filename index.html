@@ -1,196 +1,160 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEGURAL</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEGURAL</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        min-height: 100vh;
+        background: #0f1e4a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            min-height: 100vh;
-            background: #0f1e4a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
+    /* Fondo */
+    .fondo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("fondo.png");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        opacity: 0.18;
+        z-index: 0;
+        pointer-events: none;
+    }
 
-        .fondo {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("fondo.png");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: cover;
-            opacity: 0.18;
-            z-index: 0;
-            pointer-events: none;
-        }
+    .contenido {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 20px;
+        animation: aparecer 0.7s ease;
+    }
 
-        .contenido {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 20px;
-            animation: aparecer 0.7s ease;
-            display: none;
-        }
+    .logo-bg {
+        position: absolute;
+        font-size: 140px;
+        font-weight: bold;
+        color: rgba(255,255,255,0.05);
+        letter-spacing: 20px;
+        user-select: none;
+        pointer-events: none;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
 
-        .logo-bg {
-            position: absolute;
-            font-size: 140px;
-            font-weight: bold;
-            color: rgba(255,255,255,0.05);
-            letter-spacing: 20px;
-            user-select: none;
-            pointer-events: none;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
+    h1 {
+        font-size: 48px;
+        margin-bottom: 30px;
+        letter-spacing: 4px;
+    }
 
-        h1 {
-            font-size: 48px;
-            margin-bottom: 30px;
-            letter-spacing: 4px;
-        }
+    .buttons {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
 
-        .buttons {
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+    .buttons button {
+        padding: 22px 55px;
+        font-size: 22px;
+        font-weight: bold;
+        background-color: white;
+        color: #0f1e4a;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        min-width: 240px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
 
-        .buttons button {
-            padding: 22px 55px;
-            font-size: 22px;
-            font-weight: bold;
-            background-color: white;
-            color: #0f1e4a;
-            border: none;
-            border-radius: 14px;
-            cursor: pointer;
-            min-width: 240px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
+    .buttons button:hover {
+        transform: scale(1.08);
+        box-shadow: 0 14px 35px rgba(0,0,0,0.4);
+    }
 
-        .buttons button:hover {
-            transform: scale(1.08);
-            box-shadow: 0 14px 35px rgba(0,0,0,0.4);
-        }
+    @keyframes aparecer {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-        /* MODAL */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-        }
+    @media (max-width: 600px) {
+        h1 { font-size: 34px; }
+        .logo-bg { font-size: 80px; letter-spacing: 10px; }
+        .buttons button { font-size: 18px; padding: 18px 35px; }
+    }
 
-        .modal {
-            background: #14255c;
-            padding: 30px;
-            border-radius: 14px;
-            text-align: center;
-            width: 90%;
-            max-width: 360px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: aparecer 0.4s ease;
-        }
+    /* Modal Login */
+    #loginModal {
+        position: fixed;
+        top:0; left:0; right:0; bottom:0;
+        background: rgba(0,0,0,0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+    }
 
-        .modal h2 {
-            margin-bottom: 20px;
-        }
+    #loginModal .modal-content {
+        background: #1f2c63;
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        color: white;
+    }
 
-        .input-group {
-            position: relative;
-        }
+    #loginModal input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 6px;
+        border: none;
+        font-size: 16px;
+    }
 
-        .modal input {
-            width: 100%;
-            padding: 14px 44px 14px 14px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
+    #loginModal button {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #ffcd00;
+        color: #0f1e4a;
+        margin-top: 10px;
+    }
 
-        .toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 18px;
-            user-select: none;
-        }
-
-        .modal button {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: white;
-            color: #0f1e4a;
-        }
-
-        .error {
-            color: #ff6b6b;
-            margin-top: 10px;
-            display: none;
-        }
-
-        @keyframes aparecer {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    #togglePass {
+        background: none;
+        color: #ffcd00;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+</style>
 </head>
-
 <body>
-
-<div class="overlay" id="overlay">
-    <div class="modal">
-        <h2>🔒 Acceso restringido</h2>
-
-        <div class="input-group">
-            <input type="password" id="clave" placeholder="Ingrese la clave">
-            <span class="toggle" onclick="toggleClave()">👁</span>
-        </div>
-
-        <button onclick="verificarClave()">Ingresar</button>
-        <div class="error" id="error">❌ Clave incorrecta</div>
-    </div>
-</div>
 
 <div class="fondo"></div>
 
-<div class="contenido" id="contenido">
+<div class="contenido">
     <div class="logo-bg">SEGURAL</div>
     <h1>SEGURAL</h1>
-
     <div class="buttons">
         <button onclick="location.href='lista.html'">📋 LISTA</button>
         <button onclick="location.href='trabajos.html'">🧰 TRABAJOS</button>
@@ -198,44 +162,71 @@
     </div>
 </div>
 
+<!-- Modal Login -->
+<div id="loginModal" style="display:none;">
+    <div class="modal-content">
+        <h2>Usuario</h2>
+        <input type="text" id="usuario" placeholder="Usuario">
+        <h2>Clave</h2>
+        <input type="password" id="clave" placeholder="Clave">
+        <button id="loginBtn">Ingresar</button><br>
+        <button id="togglePass">Mostrar / Ocultar clave</button>
+        <p id="errorMsg" style="color:#ff5c5c; display:none;"></p>
+    </div>
+</div>
+
 <script>
-    const claveCorrecta = "pandorasbox3060";
-    const TIEMPO_SESION = 2 * 60 * 60 * 1000; // 2 horas
+const usuarios = {
+    "gustavo": "gus4018",
+    "franco": "fran4018",
+    "santiago": "san4018"
+};
 
-    function verificarSesion() {
-        const ultimaSesion = localStorage.getItem("ultimaSesion");
-        const ahora = Date.now();
+const SESSION_KEY = "seguralSession";
+const SESSION_HOURS = 5;
 
-        if (ultimaSesion && (ahora - ultimaSesion) < TIEMPO_SESION) {
-            document.getElementById("overlay").style.display = "none";
-            document.getElementById("contenido").style.display = "block";
-        }
+function mostrarLogin() {
+    document.getElementById("loginModal").style.display = "flex";
+}
+
+function ocultarLogin() {
+    document.getElementById("loginModal").style.display = "none";
+}
+
+// Revisar sesión
+const sessionData = JSON.parse(localStorage.getItem(SESSION_KEY));
+if (!sessionData || (new Date().getTime() - sessionData.timestamp > SESSION_HOURS*3600*1000)) {
+    mostrarLogin();
+}
+
+// Login
+document.getElementById("loginBtn").addEventListener("click", function() {
+    const usuario = document.getElementById("usuario").value.trim();
+    const clave = document.getElementById("clave").value.trim();
+
+    if (usuarios[usuario] && usuarios[usuario] === clave) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ user: usuario, timestamp: new Date().getTime() }));
+        ocultarLogin();
+    } else {
+        const msg = document.getElementById("errorMsg");
+        msg.style.display = "block";
+        msg.innerText = "Usuario o clave incorrectos";
     }
+});
 
-    function verificarClave() {
-        const clave = document.getElementById("clave").value;
-
-        if (clave === claveCorrecta) {
-            localStorage.setItem("ultimaSesion", Date.now());
-            document.getElementById("overlay").style.display = "none";
-            document.getElementById("contenido").style.display = "block";
-        } else {
-            document.getElementById("error").style.display = "block";
-        }
+// Enter también funciona
+document.getElementById("clave").addEventListener("keyup", function(e) {
+    if (e.key === "Enter") {
+        document.getElementById("loginBtn").click();
     }
+});
 
-    function toggleClave() {
-        const input = document.getElementById("clave");
-        input.type = input.type === "password" ? "text" : "password";
-    }
-
-    document.getElementById("clave").addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-            verificarClave();
-        }
-    });
-
-    verificarSesion();
+// Mostrar/ocultar clave
+document.getElementById("togglePass").addEventListener("click", function() {
+    const input = document.getElementById("clave");
+    if (input.type === "password") input.type = "text";
+    else input.type = "password";
+});
 </script>
 
 </body>
