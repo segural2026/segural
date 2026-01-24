@@ -68,28 +68,22 @@
 
 <h1>🧰 Nuevo Trabajo</h1>
 
-<form onsubmit="guardarTrabajo(event)">
-    <!-- DESCRIPCIÓN -->
+<form id="formTrabajo">
     <label>Trabajos realizados</label>
     <input type="text" id="descripcion" placeholder="Detalle del trabajo" required>
 
-    <!-- CLIENTE -->
     <label>Cliente</label>
     <input type="text" id="cliente" placeholder="Nombre del cliente" required>
 
-    <!-- INGRESO -->
     <label>Ingreso ($)</label>
     <input type="number" id="monto" required>
 
-    <!-- GASTOS -->
     <label>Gastos del trabajo ($)</label>
     <input type="number" id="gastos" value="0">
 
-    <!-- FECHA -->
     <label>Fecha</label>
     <input type="date" id="fecha" required>
 
-    <!-- ESTADO -->
     <label>Estado</label>
     <select id="estado">
         <option value="Pendiente">Pendiente</option>
@@ -103,9 +97,27 @@
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
-<script>
-function guardarTrabajo(event) {
-    event.preventDefault();
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+    authDomain: "segural.firebaseapp.com",
+    projectId: "segural",
+    storageBucket: "segural.firebasestorage.app",
+    messagingSenderId: "446640175127",
+    appId: "1:446640175127:web:479a11474a70be0d604452"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const formTrabajo = document.getElementById("formTrabajo");
+
+// Guardar trabajo en Firestore
+formTrabajo.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
     const descripcion = document.getElementById("descripcion").value;
     const cliente = document.getElementById("cliente").value;
@@ -114,23 +126,32 @@ function guardarTrabajo(event) {
     const fecha = document.getElementById("fecha").value;
     const estado = document.getElementById("estado").value;
 
-    const trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
+    try {
+        await addDoc(collection(db, "trabajos"), {
+            descripcion,
+            cliente,
+            monto,
+            gastos,
+            fecha,
+            estado
+        });
 
-    const trabajo = {
-        descripcion: descripcion,   // 🔴 CLAVE: YA NO SALE undefined
-        cliente: cliente,
-        monto: monto,
-        gastos: gastos,
-        fecha: fecha,
-        estado: estado
-    };
+        alert("Trabajo guardado correctamente ✔");
+        formTrabajo.reset();
+    } catch (err) {
+        alert("Error guardando trabajo: " + err.message);
+    }
+});
 
-    trabajos.push(trabajo);
-    localStorage.setItem("trabajos", JSON.stringify(trabajos));
-
-    alert("Trabajo guardado correctamente ✔");
-    event.target.reset();
+// Cargar trabajos (opcional, si querés mostrar lista)
+async function cargarTrabajos() {
+    const trabajosSnapshot = await getDocs(collection(db, "trabajos"));
+    trabajosSnapshot.forEach(doc => {
+        console.log(doc.id, doc.data()); // puedes usar esto para mostrar lista si quieres
+    });
 }
+
+cargarTrabajos();
 </script>
 
 </body>
