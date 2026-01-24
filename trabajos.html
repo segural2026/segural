@@ -33,13 +33,18 @@
             font-weight: bold;
         }
 
-        input, select {
+        input, textarea, select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
             border-radius: 6px;
             border: none;
             font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
         }
 
         button {
@@ -76,8 +81,12 @@
 
 <div class="formulario">
 
-    <label>Trabajo realizado</label>
+    <label>Nombre del trabajo</label>
     <input type="text" id="nombreTrabajo" placeholder="Ej: Instalación de alarma">
+
+    <!-- 🔹 NUEVO: DESCRIPCIÓN -->
+    <label>Trabajos realizados</label>
+    <textarea id="descripcionTrabajo" placeholder="Detalle del trabajo realizado"></textarea>
 
     <label>Dinero cobrado</label>
     <input type="number" id="montoTrabajo" placeholder="Ej: 50000">
@@ -117,6 +126,7 @@
 function guardarTrabajo() {
 
     const nombreTrabajo = document.getElementById("nombreTrabajo").value;
+    const descripcion = document.getElementById("descripcionTrabajo").value;
     const monto = document.getElementById("montoTrabajo").value;
     const gastos = document.getElementById("gastosTrabajo").value;
     const fecha = document.getElementById("fechaTrabajo").value;
@@ -134,6 +144,7 @@ function guardarTrabajo() {
     /* ===== GUARDAR TRABAJO ===== */
     const trabajo = {
         nombre: nombreTrabajo,
+        descripcion: descripcion,
         monto,
         gastos: gastos || 0,
         fecha,
@@ -147,24 +158,23 @@ function guardarTrabajo() {
     trabajos.push(trabajo);
     localStorage.setItem("trabajos", JSON.stringify(trabajos));
 
-    /* ===== GUARDAR CLIENTE (SEPARADO) ===== */
+    /* ===== GUARDAR CLIENTE ===== */
     if (cliente || direccion || telefono) {
-
         const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
 
-        const nuevoCliente = {
+        clientes.push({
             nombre: cliente,
             direccion,
             telefono
-        };
+        });
 
-        clientes.push(nuevoCliente);
         localStorage.setItem("clientes", JSON.stringify(clientes));
     }
 
-    alert("✅ Trabajo y cliente guardados");
+    alert("✅ Trabajo guardado");
 
     document.getElementById("nombreTrabajo").value = "";
+    document.getElementById("descripcionTrabajo").value = "";
     document.getElementById("montoTrabajo").value = "";
     document.getElementById("gastosTrabajo").value = "";
     document.getElementById("fechaTrabajo").value = "";
@@ -176,4 +186,3 @@ function guardarTrabajo() {
 
 </body>
 </html>
-
