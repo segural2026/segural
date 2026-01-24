@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes - SEGURAL</title>
 
     <style>
@@ -90,133 +90,107 @@
     <button class="btn-agregar" onclick="agregarCliente()">+</button>
 </header>
 
-<div id="listaClientes">Cargando clientes...</div>
+<div id="listaClientes"></div>
 
 <div class="volver">
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-        getFirestore,
-        collection,
-        addDoc,
-        getDocs,
-        updateDoc,
-        deleteDoc,
-        doc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
-        authDomain: "segural.firebaseapp.com",
-        projectId: "segural",
-        storageBucket: "segural.firebasestorage.app",
-        messagingSenderId: "446640175127",
-        appId: "1:446640175127:web:479a11474a70be0d604452"
-    };
+const firebaseConfig = {
+    apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+    authDomain: "segural.firebaseapp.com",
+    projectId: "segural",
+    storageBucket: "segural.firebasestorage.app",
+    messagingSenderId: "446640175127",
+    appId: "1:446640175127:web:479a11474a70be0d604452"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    let clientes = [];
+const listaClientesDiv = document.getElementById("listaClientes");
 
-    async function cargarClientes() {
-        const contenedor = document.getElementById("listaClientes");
-        contenedor.innerHTML = "Cargando clientes...";
+// Mostrar clientes
+async function mostrarClientes() {
+    listaClientesDiv.innerHTML = "";
+    const snapshot = await getDocs(collection(db, "clientes"));
 
-        const querySnapshot = await getDocs(collection(db, "clientes"));
-        clientes = [];
+    snapshot.forEach(docSnap => {
+        const c = { id: docSnap.id, ...docSnap.data() };
+        const div = document.createElement("div");
+        div.className = "cliente";
 
-        querySnapshot.forEach((docSnap) => {
-            clientes.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        div.innerHTML = `
+            <p><strong>Cliente:</strong> ${c.nombre}</p>
+            <p><strong>Dirección:</strong> ${c.direccion}</p>
+            <p><strong>Teléfono:</strong> ${c.telefono}</p>
 
+            <div class="acciones">
+                <button class="editar" onclick="editarCliente('${c.id}', '${c.nombre}', '${c.direccion}', '${c.telefono}')">Editar</button>
+                <button class="eliminar" onclick="eliminarCliente('${c.id}')">Eliminar</button>
+            </div>
+        `;
+
+        listaClientesDiv.appendChild(div);
+    });
+}
+
+// Agregar cliente
+window.agregarCliente = async function() {
+    const nombre = prompt("Nombre y apellido:");
+    if (!nombre) return;
+
+    const direccion = prompt("Dirección:");
+    if (!direccion) return;
+
+    const telefono = prompt("Número de teléfono:");
+    if (!telefono) return;
+
+    try {
+        await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
         mostrarClientes();
+    } catch (err) {
+        alert("Error agregando cliente: " + err.message);
     }
+};
 
-    function mostrarClientes() {
-        const contenedor = document.getElementById("listaClientes");
-        contenedor.innerHTML = "";
+// Editar cliente
+window.editarCliente = async function(id, nombreOld, direccionOld, telefonoOld) {
+    const nombre = prompt("Editar nombre y apellido:", nombreOld);
+    if (!nombre) return;
 
-        if (clientes.length === 0) {
-            contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
-            return;
-        }
+    const direccion = prompt("Editar dirección:", direccionOld);
+    if (!direccion) return;
 
-        clientes.forEach((c, index) => {
-            const div = document.createElement("div");
-            div.className = "cliente";
+    const telefono = prompt("Editar teléfono:", telefonoOld);
+    if (!telefono) return;
 
-            div.innerHTML = `
-                <p><strong>Cliente:</strong> ${c.nombre}</p>
-                <p><strong>Dirección:</strong> ${c.direccion}</p>
-                <p><strong>Teléfono:</strong> ${c.telefono}</p>
-
-                <div class="acciones">
-                    <button class="editar" onclick="editarCliente('${c.id}')">Editar</button>
-                    <button class="eliminar" onclick="eliminarCliente('${c.id}')">Eliminar</button>
-                </div>
-            `;
-
-            contenedor.appendChild(div);
-        });
+    try {
+        await updateDoc(doc(db, "clientes", id), { nombre, direccion, telefono });
+        mostrarClientes();
+    } catch (err) {
+        alert("Error editando cliente: " + err.message);
     }
+};
 
-    async function agregarCliente() {
-        const nombre = prompt("Nombre y apellido:");
-        if (!nombre) return;
+// Eliminar cliente
+window.eliminarCliente = async function(id) {
+    if (!confirm("¿Eliminar este cliente?")) return;
 
-        const direccion = prompt("Dirección:");
-        if (!direccion) return;
-
-        const telefono = prompt("Número de teléfono:");
-        if (!telefono) return;
-
-        try {
-            await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
-            await cargarClientes();
-        } catch (e) {
-            alert("Error guardando cliente: " + e.message);
-        }
+    try {
+        await deleteDoc(doc(db, "clientes", id));
+        mostrarClientes();
+    } catch (err) {
+        alert("Error eliminando cliente: " + err.message);
     }
+};
 
-    async function editarCliente(id) {
-        const cliente = clientes.find(c => c.id === id);
-        if (!cliente) return alert("Cliente no encontrado");
-
-        const nombre = prompt("Editar nombre y apellido:", cliente.nombre);
-        if (!nombre) return;
-
-        const direccion = prompt("Editar dirección:", cliente.direccion);
-        if (!direccion) return;
-
-        const telefono = prompt("Editar teléfono:", cliente.telefono);
-        if (!telefono) return;
-
-        try {
-            const docRef = doc(db, "clientes", id);
-            await updateDoc(docRef, { nombre, direccion, telefono });
-            await cargarClientes();
-        } catch (e) {
-            alert("Error actualizando cliente: " + e.message);
-        }
-    }
-
-    async function eliminarCliente(id) {
-        if (!confirm("¿Eliminar este cliente?")) return;
-
-        try {
-            const docRef = doc(db, "clientes", id);
-            await deleteDoc(docRef);
-            await cargarClientes();
-        } catch (e) {
-            alert("Error eliminando cliente: " + e.message);
-        }
-    }
-
-    cargarClientes();
+// Cargar clientes al iniciar
+mostrarClientes();
 </script>
 
 </body>
