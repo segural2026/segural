@@ -5,83 +5,133 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clientes - SEGURAL</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #0f1e4a;
-        color: white;
-        margin: 0;
-        padding: 20px;
-    }
+body {
+    font-family: Arial, sans-serif;
+    background: #0f1e4a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
 
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-    h1 { margin: 0; }
+h1 { margin: 0; }
 
-    .btn-agregar {
-        font-size: 28px;
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        border: none;
-        cursor: pointer;
-        background: white;
-        color: #0f1e4a;
-        font-weight: bold;
-        transition: transform 0.2s ease;
-    }
+.btn-agregar {
+    font-size: 28px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: white;
+    color: #0f1e4a;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
 
-    .btn-agregar:hover { transform: scale(1.1); }
+.btn-agregar:hover { transform: scale(1.1); }
 
-    .cliente {
-        background: rgba(255,255,255,0.1);
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-    }
+/* Formulario modal */
+#formularioCliente {
+    display: none;
+    background: rgba(0,0,0,0.85);
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    justify-content: center;
+    align-items: center;
+}
 
-    .cliente p { margin: 6px 0; }
+#formularioCliente form {
+    background: #1f2a50;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 90%;
+    max-width: 400px;
+}
 
-    .acciones {
-        margin-top: 10px;
-        display: flex;
-        gap: 10px;
-    }
+#formularioCliente input {
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+}
 
-    .acciones button {
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-    }
+#formularioCliente button {
+    padding: 12px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: white;
+    color: #0f1e4a;
+}
 
-    .editar { background: #e0e0e0; color: #000; }
-    .eliminar { background: #444; color: white; }
+.cliente {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
 
-    .volver {
-        margin-top: 25px;
-        text-align: center;
-    }
+.cliente p { margin: 6px 0; }
 
-    .volver a {
-        color: white;
-        text-decoration: underline;
-    }
+.acciones {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.acciones button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.editar { background: #e0e0e0; color: #000; }
+.eliminar { background: #444; color: white; }
+
+.volver {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.volver a {
+    color: white;
+    text-decoration: underline;
+}
 </style>
 </head>
 <body>
 
 <header>
     <h1>👤 Clientes</h1>
-    <button class="btn-agregar" onclick="agregarCliente()">+</button>
+    <button class="btn-agregar" onclick="abrirFormulario()">+</button>
 </header>
 
 <div id="listaClientes"></div>
+
+<!-- Formulario para agregar clientes -->
+<div id="formularioCliente">
+    <form onsubmit="guardarCliente(event)">
+        <h2>Agregar Cliente</h2>
+        <input type="text" id="nombre" placeholder="Nombre y apellido" required>
+        <input type="text" id="direccion" placeholder="Dirección" required>
+        <input type="text" id="telefono" placeholder="Teléfono" required>
+        <button type="submit">Guardar Cliente</button>
+        <button type="button" onclick="cerrarFormulario()">Cancelar</button>
+    </form>
+</div>
 
 <div class="volver">
     <a href="index.html">⬅ Volver al inicio</a>
@@ -89,38 +139,37 @@
 
 <!-- Firebase -->
 <script type="module">
-  // Importar Firebase
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
 
-  // Configuración de tu proyecto
-  const firebaseConfig = {
-    apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
-    authDomain: "segural.firebaseapp.com",
-    projectId: "segural",
-    storageBucket: "segural.firebasestorage.app",
-    messagingSenderId: "446640175127",
-    appId: "1:446640175127:web:479a11474a70be0d604452"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+  authDomain: "segural.firebaseapp.com",
+  projectId: "segural",
+  storageBucket: "segural.firebasestorage.app",
+  messagingSenderId: "446640175127",
+  appId: "1:446640175127:web:479a11474a70be0d604452"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const clientesCol = collection(db, "clientes");
-  const listaClientes = document.getElementById("listaClientes");
+const clientesCol = collection(db, "clientes");
+const listaClientes = document.getElementById("listaClientes");
+const formularioDiv = document.getElementById("formularioCliente");
 
-  // Mostrar clientes en tiempo real
-  onSnapshot(clientesCol, (snapshot) => {
-      listaClientes.innerHTML = "";
-      if (snapshot.empty) {
-          listaClientes.innerHTML = "<p>No hay clientes cargados.</p>";
-          return;
-      }
-      snapshot.forEach(docSnap => {
-          const c = docSnap.data();
-          const div = document.createElement("div");
-          div.className = "cliente";
-          div.innerHTML = `
+// Mostrar clientes en tiempo real
+onSnapshot(clientesCol, snapshot => {
+    listaClientes.innerHTML = "";
+    if (snapshot.empty) {
+        listaClientes.innerHTML = "<p>No hay clientes cargados.</p>";
+        return;
+    }
+    snapshot.forEach(docSnap => {
+        const c = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "cliente";
+        div.innerHTML = `
             <p><strong>Cliente:</strong> ${c.nombre}</p>
             <p><strong>Dirección:</strong> ${c.direccion}</p>
             <p><strong>Teléfono:</strong> ${c.telefono}</p>
@@ -128,43 +177,51 @@
                 <button class="editar" onclick="editarCliente('${docSnap.id}', '${c.nombre}', '${c.direccion}', '${c.telefono}')">Editar</button>
                 <button class="eliminar" onclick="eliminarCliente('${docSnap.id}')">Eliminar</button>
             </div>
-          `;
-          listaClientes.appendChild(div);
-      });
-  });
+        `;
+        listaClientes.appendChild(div);
+    });
+});
 
-  // Agregar cliente
-  window.agregarCliente = async function() {
-      const nombre = prompt("Nombre y apellido del cliente:");
-      if (!nombre) return;
-      const direccion = prompt("Dirección del cliente:");
-      if (!direccion) return;
-      const telefono = prompt("Número de teléfono:");
-      if (!telefono) return;
+// Abrir formulario
+window.abrirFormulario = () => { formularioDiv.style.display = "flex"; }
+// Cerrar formulario
+window.cerrarFormulario = () => { formularioDiv.style.display = "none"; }
 
-      await addDoc(clientesCol, { nombre, direccion, telefono });
-  }
+// Guardar cliente
+window.guardarCliente = async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById("nombre").value;
+    const direccion = document.getElementById("direccion").value;
+    const telefono = document.getElementById("telefono").value;
 
-  // Editar cliente
-  window.editarCliente = async function(id, oldNombre, oldDireccion, oldTelefono) {
-      const nombre = prompt("Editar nombre y apellido:", oldNombre);
-      if (!nombre) return;
-      const direccion = prompt("Editar dirección:", oldDireccion);
-      if (!direccion) return;
-      const telefono = prompt("Editar teléfono:", oldTelefono);
-      if (!telefono) return;
+    await addDoc(clientesCol, { nombre, direccion, telefono });
 
-      const clienteRef = doc(db, "clientes", id);
-      await updateDoc(clienteRef, { nombre, direccion, telefono });
-  }
+    document.getElementById("nombre").value = "";
+    document.getElementById("direccion").value = "";
+    document.getElementById("telefono").value = "";
+    cerrarFormulario();
+}
 
-  // Eliminar cliente
-  window.eliminarCliente = async function(id) {
-      if (confirm("¿Eliminar este cliente?")) {
-          const clienteRef = doc(db, "clientes", id);
-          await deleteDoc(clienteRef);
-      }
-  }
+// Editar cliente
+window.editarCliente = async (id, oldNombre, oldDireccion, oldTelefono) => {
+    const nombre = prompt("Editar nombre y apellido:", oldNombre);
+    if (!nombre) return;
+    const direccion = prompt("Editar dirección:", oldDireccion);
+    if (!direccion) return;
+    const telefono = prompt("Editar teléfono:", oldTelefono);
+    if (!telefono) return;
+
+    const clienteRef = doc(db, "clientes", id);
+    await updateDoc(clienteRef, { nombre, direccion, telefono });
+}
+
+// Eliminar cliente
+window.eliminarCliente = async (id) => {
+    if (confirm("¿Eliminar este cliente?")) {
+        const clienteRef = doc(db, "clientes", id);
+        await deleteDoc(clienteRef);
+    }
+}
 </script>
 
 </body>
