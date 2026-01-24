@@ -104,36 +104,30 @@
             .buttons button { font-size: 18px; padding: 18px 35px; }
         }
 
-        /* Cartel cotización dólar */
-        #cartelDolar {
+        /* Cartel de Dólar */
+        #dolarContainer {
             position: fixed;
             top: 10px;
             left: 10px;
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.1);
             padding: 10px 15px;
             border-radius: 8px;
-            color: #0f1e4a;
+            color: white;
             font-weight: bold;
-            z-index: 9999;
-            font-size: 16px;
+            z-index: 1000;
+        }
+        #dolarContainer div {
+            margin-bottom: 5px;
         }
     </style>
 </head>
 
 <body>
 
-<!-- Cartel dólar -->
-<div id="cartelDolar">
-    <div>📈 Dólar Oficial: $<span id="dolarOficial">...</span></div>
-    <div>📊 Dólar Blue: $<span id="dolarBlue">...</span></div>
-</div>
-
 <div class="fondo"></div>
 
 <div class="contenido">
-
     <div class="logo-bg">SEGURAL</div>
-
     <h1>SEGURAL</h1>
 
     <div class="buttons">
@@ -141,23 +135,33 @@
         <button onclick="location.href='trabajos.html'">🧰 TRABAJOS</button>
         <button onclick="location.href='clientes.html'">👤 CLIENTES</button>
     </div>
+</div>
 
+<!-- Cartel del Dólar -->
+<div id="dolarContainer">
+    <div>Dólar Oficial: <span id="dolarOficial">Cargando...</span></div>
+    <div>Dólar Blue: <span id="dolarBlue">Cargando...</span></div>
 </div>
 
 <script>
-    // Función para actualizar cotizaciones
     async function actualizarDolar() {
         try {
-            const res = await fetch("https://monedapi.ar/api/dolar");
-            const data = await res.json();
+            // Dólar Oficial
+            const respuesta = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolaroficial');
+            const datos = await respuesta.json();
+            const oficial = datos.venta ? Number(datos.venta).toFixed(2) : "N/A";
 
-            const oficial = data.oficial?.venta ?? "—";
-            const blue = data.blue?.venta ?? "—";
+            // Dólar Blue
+            const respuestaBlue = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolarblue');
+            const datosBlue = await respuestaBlue.json();
+            const blue = datosBlue.venta ? Number(datosBlue.venta).toFixed(2) : "N/A";
 
-            document.getElementById("dolarOficial").innerText = oficial;
-            document.getElementById("dolarBlue").innerText = blue;
-        } catch (err) {
-            console.error("Error al traer cotización:", err);
+            document.getElementById('dolarOficial').innerText = `$${oficial}`;
+            document.getElementById('dolarBlue').innerText = `$${blue}`;
+        } catch(e) {
+            console.error("Error al traer el dólar:", e);
+            document.getElementById('dolarOficial').innerText = "Error";
+            document.getElementById('dolarBlue').innerText = "Error";
         }
     }
 
