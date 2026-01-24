@@ -25,11 +25,10 @@
             margin: 0;
         }
 
-        .btn-agregar {
-            font-size: 28px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
+        button#btnAgregarCliente {
+            font-size: 18px;
+            padding: 10px 18px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             background: white;
@@ -82,45 +81,59 @@
             text-decoration: underline;
         }
 
-        /* Modal */
+        /* Modal para agregar cliente */
         #modalCliente {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.6);
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 999;
+            z-index: 1000;
         }
 
-        #modalCliente .contenido-modal {
-            background: #0f1e4a;
-            padding: 20px;
-            border-radius: 12px;
+        #modalCliente .modal-content {
+            background: #1a2b5c;
+            padding: 20px 25px;
+            border-radius: 10px;
             width: 90%;
             max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            box-sizing: border-box;
+        }
+
+        #modalCliente label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
         }
 
         #modalCliente input {
-            padding: 10px;
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
             border-radius: 6px;
             border: none;
         }
 
         #modalCliente button {
-            padding: 12px;
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            font-weight: bold;
             border: none;
             border-radius: 8px;
+            cursor: pointer;
             background: white;
             color: #0f1e4a;
-            font-weight: bold;
-            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #modalCliente .cerrar {
+            background: #c0392b;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -128,7 +141,7 @@
 
 <header>
     <h1>👤 Clientes</h1>
-    <button class="btn-agregar" onclick="abrirModal()">+</button>
+    <button id="btnAgregarCliente">Agregar Cliente</button>
 </header>
 
 <div id="listaClientes"></div>
@@ -137,51 +150,40 @@
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
-<!-- Modal para agregar cliente -->
+<!-- Modal -->
 <div id="modalCliente">
-    <div class="contenido-modal">
-        <h2>Agregar Cliente</h2>
+    <div class="modal-content">
+        <h2>Nuevo Cliente</h2>
+        <label>Nombre y Apellido</label>
         <input type="text" id="inputNombre" placeholder="Nombre y apellido">
+
+        <label>Dirección</label>
         <input type="text" id="inputDireccion" placeholder="Dirección">
-        <input type="text" id="inputTelefono" placeholder="Teléfono">
-        <button onclick="guardarCliente()">Guardar Cliente</button>
-        <button onclick="cerrarModal()">Cancelar</button>
+
+        <label>Teléfono</label>
+        <input type="text" id="inputTelefono" placeholder="Número de teléfono">
+
+        <button id="guardarCliente">Guardar Cliente</button>
+        <button class="cerrar" id="cerrarModal">Cancelar</button>
     </div>
 </div>
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-// Config Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
-  authDomain: "segural.firebaseapp.com",
-  projectId: "segural",
-  storageBucket: "segural.firebasestorage.app",
-  messagingSenderId: "446640175127",
-  appId: "1:446640175127:web:479a11474a70be0d604452"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+<script>
 let clientes = [];
 
-// Mostrar clientes
-async function mostrarClientes() {
+// Cargar clientes de Firestore si quieres, por ahora localStorage
+clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+
+function guardarClientes() {
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    mostrarClientes();
+}
+
+function mostrarClientes() {
     const contenedor = document.getElementById("listaClientes");
     contenedor.innerHTML = "";
 
-    clientes = [];
-    const snapshot = await getDocs(collection(db, "clientes"));
-    snapshot.forEach(docSnap => {
-        const c = { id: docSnap.id, ...docSnap.data() };
-        clientes.push(c);
-    });
-
-    if (clientes.length === 0) {
+    if(clientes.length === 0){
         contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
         return;
     }
@@ -202,51 +204,58 @@ async function mostrarClientes() {
     });
 }
 
-// Abrir y cerrar modal
-function abrirModal() { document.getElementById("modalCliente").style.display = "flex"; }
-function cerrarModal() { document.getElementById("modalCliente").style.display = "none"; }
+function editarCliente(index){
+    const c = clientes[index];
+    const nombre = prompt("Editar nombre y apellido:", c.nombre);
+    if(!nombre) return;
+    const direccion = prompt("Editar dirección:", c.direccion);
+    if(!direccion) return;
+    const telefono = prompt("Editar teléfono:", c.telefono);
+    if(!telefono) return;
 
-// Guardar cliente en Firestore
-async function guardarCliente() {
+    clientes[index] = {nombre, direccion, telefono};
+    guardarClientes();
+}
+
+function eliminarCliente(index){
+    if(confirm("¿Eliminar este cliente?")){
+        clientes.splice(index,1);
+        guardarClientes();
+    }
+}
+
+// Modal
+const modal = document.getElementById("modalCliente");
+const btnAgregar = document.getElementById("btnAgregarCliente");
+const btnCerrar = document.getElementById("cerrarModal");
+const btnGuardar = document.getElementById("guardarCliente");
+
+btnAgregar.addEventListener("click", () => modal.style.display = "flex");
+btnCerrar.addEventListener("click", () => modal.style.display = "none");
+
+btnGuardar.addEventListener("click", () => {
     const nombre = document.getElementById("inputNombre").value.trim();
     const direccion = document.getElementById("inputDireccion").value.trim();
     const telefono = document.getElementById("inputTelefono").value.trim();
 
-    if(!nombre || !direccion || !telefono) { alert("Completa todos los campos"); return; }
+    if(!nombre || !direccion || !telefono){
+        alert("Por favor completa todos los campos");
+        return;
+    }
 
-    await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
+    clientes.push({nombre, direccion, telefono});
+    guardarClientes();
 
+    // Limpiar inputs y cerrar modal
     document.getElementById("inputNombre").value = "";
     document.getElementById("inputDireccion").value = "";
     document.getElementById("inputTelefono").value = "";
+    modal.style.display = "none";
+});
 
-    cerrarModal();
-    mostrarClientes();
-}
-
-// Editar cliente
-async function editarCliente(index) {
-    const c = clientes[index];
-    const nuevoNombre = prompt("Editar nombre:", c.nombre);
-    if (!nuevoNombre) return;
-    const nuevaDireccion = prompt("Editar dirección:", c.direccion);
-    if (!nuevaDireccion) return;
-    const nuevoTelefono = prompt("Editar teléfono:", c.telefono);
-    if (!nuevoTelefono) return;
-
-    const clienteRef = doc(db, "clientes", c.id);
-    await updateDoc(clienteRef, { nombre: nuevoNombre, direccion: nuevaDireccion, telefono: nuevoTelefono });
-    mostrarClientes();
-}
-
-// Eliminar cliente
-async function eliminarCliente(index) {
-    const c = clientes[index];
-    if (confirm("¿Eliminar este cliente?")) {
-        await deleteDoc(doc(db, "clientes", c.id));
-        mostrarClientes();
-    }
-}
+window.addEventListener("click", (e) => {
+    if(e.target === modal) modal.style.display = "none";
+});
 
 mostrarClientes();
 </script>
