@@ -9,9 +9,9 @@
         body {
             font-family: Arial, sans-serif;
             background: #0f1e4a;
+            color: white;
             margin: 0;
             padding: 20px;
-            color: white;
         }
 
         h1 {
@@ -19,54 +19,43 @@
             margin-bottom: 20px;
         }
 
-        .formulario {
+        form {
             max-width: 500px;
             margin: auto;
             background: rgba(255,255,255,0.1);
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
         }
 
         label {
             display: block;
             margin-top: 12px;
-            font-weight: bold;
         }
 
-        input, textarea, select {
+        input, select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
             border-radius: 6px;
             border: none;
-            font-size: 16px;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 70px;
         }
 
         button {
-            width: 100%;
             margin-top: 20px;
-            padding: 14px;
-            font-size: 18px;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
             font-weight: bold;
+            background: white;
+            color: #0f1e4a;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            background: white;
-            color: #0f1e4a;
-        }
-
-        button:hover {
-            opacity: 0.9;
         }
 
         .volver {
-            margin-top: 15px;
             text-align: center;
+            margin-top: 20px;
         }
 
         .volver a {
@@ -77,110 +66,70 @@
 </head>
 <body>
 
-<h1>🧰 Cargar trabajo</h1>
+<h1>🧰 Nuevo Trabajo</h1>
 
-<div class="formulario">
-
-    <label>Nombre del trabajo</label>
-    <input type="text" id="nombreTrabajo" placeholder="Ej: Instalación de alarma">
-
-    <!-- 🔹 NUEVO: DESCRIPCIÓN -->
+<form onsubmit="guardarTrabajo(event)">
+    <!-- DESCRIPCIÓN -->
     <label>Trabajos realizados</label>
-    <textarea id="descripcionTrabajo" placeholder="Detalle del trabajo realizado"></textarea>
+    <input type="text" id="descripcion" placeholder="Detalle del trabajo" required>
 
-    <label>Dinero cobrado</label>
-    <input type="number" id="montoTrabajo" placeholder="Ej: 50000">
+    <!-- CLIENTE -->
+    <label>Cliente</label>
+    <input type="text" id="cliente" placeholder="Nombre del cliente" required>
 
-    <label>Gastos del trabajo</label>
-    <input type="number" id="gastosTrabajo" placeholder="Ej: 12000">
+    <!-- INGRESO -->
+    <label>Ingreso ($)</label>
+    <input type="number" id="monto" required>
 
-    <label>Fecha del trabajo</label>
-    <input type="date" id="fechaTrabajo">
+    <!-- GASTOS -->
+    <label>Gastos del trabajo ($)</label>
+    <input type="number" id="gastos" value="0">
 
-    <label>Estado del trabajo</label>
-    <select id="estadoTrabajo">
+    <!-- FECHA -->
+    <label>Fecha</label>
+    <input type="date" id="fecha" required>
+
+    <!-- ESTADO -->
+    <label>Estado</label>
+    <select id="estado">
         <option value="Pendiente">Pendiente</option>
-        <option value="En proceso">En proceso</option>
         <option value="Finalizado">Finalizado</option>
     </select>
 
-    <!-- DATOS DEL CLIENTE -->
-    <label>Cliente</label>
-    <input type="text" id="clienteNombre" placeholder="Ej: Juan Pérez">
+    <button type="submit">💾 Guardar trabajo</button>
+</form>
 
-    <label>Dirección del cliente</label>
-    <input type="text" id="direccionCliente" placeholder="Ej: Av. San Martín 123">
-
-    <label>Número de teléfono</label>
-    <input type="tel" id="telefonoCliente" placeholder="Ej: 11 2345 6789">
-
-    <button onclick="guardarTrabajo()">Guardar trabajo</button>
-
-    <div class="volver">
-        <a href="index.html">⬅ Volver al inicio</a>
-    </div>
-
+<div class="volver">
+    <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
 <script>
-function guardarTrabajo() {
+function guardarTrabajo(event) {
+    event.preventDefault();
 
-    const nombreTrabajo = document.getElementById("nombreTrabajo").value;
-    const descripcion = document.getElementById("descripcionTrabajo").value;
-    const monto = document.getElementById("montoTrabajo").value;
-    const gastos = document.getElementById("gastosTrabajo").value;
-    const fecha = document.getElementById("fechaTrabajo").value;
-    const estado = document.getElementById("estadoTrabajo").value;
-
-    const cliente = document.getElementById("clienteNombre").value;
-    const direccion = document.getElementById("direccionCliente").value;
-    const telefono = document.getElementById("telefonoCliente").value;
-
-    if (!nombreTrabajo || !monto || !fecha) {
-        alert("Completá al menos nombre del trabajo, monto y fecha");
-        return;
-    }
-
-    /* ===== GUARDAR TRABAJO ===== */
-    const trabajo = {
-        nombre: nombreTrabajo,
-        descripcion: descripcion,
-        monto,
-        gastos: gastos || 0,
-        fecha,
-        estado,
-        cliente,
-        direccion,
-        telefono
-    };
+    const descripcion = document.getElementById("descripcion").value;
+    const cliente = document.getElementById("cliente").value;
+    const monto = Number(document.getElementById("monto").value);
+    const gastos = Number(document.getElementById("gastos").value);
+    const fecha = document.getElementById("fecha").value;
+    const estado = document.getElementById("estado").value;
 
     const trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
+
+    const trabajo = {
+        descripcion: descripcion,   // 🔴 CLAVE: YA NO SALE undefined
+        cliente: cliente,
+        monto: monto,
+        gastos: gastos,
+        fecha: fecha,
+        estado: estado
+    };
+
     trabajos.push(trabajo);
     localStorage.setItem("trabajos", JSON.stringify(trabajos));
 
-    /* ===== GUARDAR CLIENTE ===== */
-    if (cliente || direccion || telefono) {
-        const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
-
-        clientes.push({
-            nombre: cliente,
-            direccion,
-            telefono
-        });
-
-        localStorage.setItem("clientes", JSON.stringify(clientes));
-    }
-
-    alert("✅ Trabajo guardado");
-
-    document.getElementById("nombreTrabajo").value = "";
-    document.getElementById("descripcionTrabajo").value = "";
-    document.getElementById("montoTrabajo").value = "";
-    document.getElementById("gastosTrabajo").value = "";
-    document.getElementById("fechaTrabajo").value = "";
-    document.getElementById("clienteNombre").value = "";
-    document.getElementById("direccionCliente").value = "";
-    document.getElementById("telefonoCliente").value = "";
+    alert("Trabajo guardado correctamente ✔");
+    event.target.reset();
 }
 </script>
 
