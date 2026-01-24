@@ -1,148 +1,160 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clientes - SEGURAL</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f1e4a;
-    color: white;
-    margin: 0;
-    padding: 20px;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - SEGURAL</title>
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f1e4a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
 
-h1 { margin: 0; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-.btn-agregar {
-    font-size: 28px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background: white;
-    color: #0f1e4a;
-    font-weight: bold;
-    transition: transform 0.2s ease;
-}
+        h1 {
+            margin: 0;
+        }
 
-.btn-agregar:hover { transform: scale(1.1); }
+        .btn-agregar {
+            font-size: 28px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: white;
+            color: #0f1e4a;
+            font-weight: bold;
+        }
 
-/* Formulario modal */
-#formularioCliente {
-    display: none;
-    background: rgba(0,0,0,0.85);
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
+        .cliente {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
 
-#formularioCliente form {
-    background: #1f2a50;
-    padding: 20px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 90%;
-    max-width: 400px;
-}
+        .cliente p {
+            margin: 6px 0;
+        }
 
-#formularioCliente input {
-    padding: 10px;
-    border-radius: 6px;
-    border: none;
-}
+        .acciones {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
 
-#formularioCliente button {
-    padding: 12px;
-    font-weight: bold;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: white;
-    color: #0f1e4a;
-}
+        .acciones button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
-.cliente {
-    background: rgba(255,255,255,0.1);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
+        .editar {
+            background: #e0e0e0;
+            color: #000;
+        }
 
-.cliente p { margin: 6px 0; }
+        .eliminar {
+            background: #444;
+            color: white;
+        }
 
-.acciones {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-}
+        .volver {
+            margin-top: 25px;
+            text-align: center;
+        }
 
-.acciones button {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-}
+        .volver a {
+            color: white;
+            text-decoration: underline;
+        }
 
-.editar { background: #e0e0e0; color: #000; }
-.eliminar { background: #444; color: white; }
+        /* Modal */
+        #modalCliente {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
 
-.volver {
-    margin-top: 25px;
-    text-align: center;
-}
+        #modalCliente .contenido-modal {
+            background: #0f1e4a;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-.volver a {
-    color: white;
-    text-decoration: underline;
-}
-</style>
+        #modalCliente input {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        #modalCliente button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: #0f1e4a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
 <header>
     <h1>👤 Clientes</h1>
-    <button class="btn-agregar" id="btnAbrir">+</button>
+    <button class="btn-agregar" onclick="abrirModal()">+</button>
 </header>
 
 <div id="listaClientes"></div>
-
-<!-- Formulario para agregar clientes -->
-<div id="formularioCliente">
-    <form id="formCliente">
-        <h2>Agregar Cliente</h2>
-        <input type="text" id="nombre" placeholder="Nombre y apellido" required>
-        <input type="text" id="direccion" placeholder="Dirección" required>
-        <input type="text" id="telefono" placeholder="Teléfono" required>
-        <button type="submit">Guardar Cliente</button>
-        <button type="button" id="btnCerrar">Cancelar</button>
-    </form>
-</div>
 
 <div class="volver">
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
+<!-- Modal para agregar cliente -->
+<div id="modalCliente">
+    <div class="contenido-modal">
+        <h2>Agregar Cliente</h2>
+        <input type="text" id="inputNombre" placeholder="Nombre y apellido">
+        <input type="text" id="inputDireccion" placeholder="Dirección">
+        <input type="text" id="inputTelefono" placeholder="Teléfono">
+        <button onclick="guardarCliente()">Guardar Cliente</button>
+        <button onclick="cerrarModal()">Cancelar</button>
+    </div>
+</div>
+
 <!-- Firebase -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
   authDomain: "segural.firebaseapp.com",
@@ -155,26 +167,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const clientesCol = collection(db, "clientes");
-const listaClientes = document.getElementById("listaClientes");
-const formularioDiv = document.getElementById("formularioCliente");
-const formCliente = document.getElementById("formCliente");
-const btnAbrir = document.getElementById("btnAbrir");
-const btnCerrar = document.getElementById("btnCerrar");
+let clientes = [];
 
-// Abrir y cerrar formulario
-btnAbrir.addEventListener("click", () => formularioDiv.style.display = "flex");
-btnCerrar.addEventListener("click", () => formularioDiv.style.display = "none");
+// Mostrar clientes
+async function mostrarClientes() {
+    const contenedor = document.getElementById("listaClientes");
+    contenedor.innerHTML = "";
 
-// Mostrar clientes en tiempo real
-onSnapshot(clientesCol, snapshot => {
-    listaClientes.innerHTML = "";
-    if (snapshot.empty) {
-        listaClientes.innerHTML = "<p>No hay clientes cargados.</p>";
+    clientes = [];
+    const snapshot = await getDocs(collection(db, "clientes"));
+    snapshot.forEach(docSnap => {
+        const c = { id: docSnap.id, ...docSnap.data() };
+        clientes.push(c);
+    });
+
+    if (clientes.length === 0) {
+        contenedor.innerHTML = "<p>No hay clientes cargados.</p>";
         return;
     }
-    snapshot.forEach(docSnap => {
-        const c = docSnap.data();
+
+    clientes.forEach((c, index) => {
         const div = document.createElement("div");
         div.className = "cliente";
         div.innerHTML = `
@@ -182,47 +194,61 @@ onSnapshot(clientesCol, snapshot => {
             <p><strong>Dirección:</strong> ${c.direccion}</p>
             <p><strong>Teléfono:</strong> ${c.telefono}</p>
             <div class="acciones">
-                <button class="editar" onclick="editarCliente('${docSnap.id}', '${c.nombre}', '${c.direccion}', '${c.telefono}')">Editar</button>
-                <button class="eliminar" onclick="eliminarCliente('${docSnap.id}')">Eliminar</button>
+                <button class="editar" onclick="editarCliente(${index})">Editar</button>
+                <button class="eliminar" onclick="eliminarCliente(${index})">Eliminar</button>
             </div>
         `;
-        listaClientes.appendChild(div);
+        contenedor.appendChild(div);
     });
-});
+}
 
-// Guardar cliente
-formCliente.addEventListener("submit", async e => {
-    e.preventDefault();
-    const nombre = document.getElementById("nombre").value;
-    const direccion = document.getElementById("direccion").value;
-    const telefono = document.getElementById("telefono").value;
+// Abrir y cerrar modal
+function abrirModal() { document.getElementById("modalCliente").style.display = "flex"; }
+function cerrarModal() { document.getElementById("modalCliente").style.display = "none"; }
 
-    await addDoc(clientesCol, { nombre, direccion, telefono });
+// Guardar cliente en Firestore
+async function guardarCliente() {
+    const nombre = document.getElementById("inputNombre").value.trim();
+    const direccion = document.getElementById("inputDireccion").value.trim();
+    const telefono = document.getElementById("inputTelefono").value.trim();
 
-    formCliente.reset();
-    formularioDiv.style.display = "none";
-});
+    if(!nombre || !direccion || !telefono) { alert("Completa todos los campos"); return; }
+
+    await addDoc(collection(db, "clientes"), { nombre, direccion, telefono });
+
+    document.getElementById("inputNombre").value = "";
+    document.getElementById("inputDireccion").value = "";
+    document.getElementById("inputTelefono").value = "";
+
+    cerrarModal();
+    mostrarClientes();
+}
 
 // Editar cliente
-window.editarCliente = async (id, oldNombre, oldDireccion, oldTelefono) => {
-    const nombre = prompt("Editar nombre y apellido:", oldNombre);
-    if (!nombre) return;
-    const direccion = prompt("Editar dirección:", oldDireccion);
-    if (!direccion) return;
-    const telefono = prompt("Editar teléfono:", oldTelefono);
-    if (!telefono) return;
+async function editarCliente(index) {
+    const c = clientes[index];
+    const nuevoNombre = prompt("Editar nombre:", c.nombre);
+    if (!nuevoNombre) return;
+    const nuevaDireccion = prompt("Editar dirección:", c.direccion);
+    if (!nuevaDireccion) return;
+    const nuevoTelefono = prompt("Editar teléfono:", c.telefono);
+    if (!nuevoTelefono) return;
 
-    const clienteRef = doc(db, "clientes", id);
-    await updateDoc(clienteRef, { nombre, direccion, telefono });
+    const clienteRef = doc(db, "clientes", c.id);
+    await updateDoc(clienteRef, { nombre: nuevoNombre, direccion: nuevaDireccion, telefono: nuevoTelefono });
+    mostrarClientes();
 }
 
 // Eliminar cliente
-window.eliminarCliente = async (id) => {
+async function eliminarCliente(index) {
+    const c = clientes[index];
     if (confirm("¿Eliminar este cliente?")) {
-        const clienteRef = doc(db, "clientes", id);
-        await deleteDoc(clienteRef);
+        await deleteDoc(doc(db, "clientes", c.id));
+        mostrarClientes();
     }
 }
+
+mostrarClientes();
 </script>
 
 </body>
