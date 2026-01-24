@@ -104,20 +104,20 @@
             .buttons button { font-size: 18px; padding: 18px 35px; }
         }
 
-        /* Cartel de Dólar */
-        #dolarContainer {
+        /* Cotizaciones dólar */
+        #cotizacionesDolar {
             position: fixed;
             top: 10px;
             left: 10px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.9);
             padding: 10px 15px;
             border-radius: 8px;
-            color: white;
+            color: #0f1e4a;
             font-weight: bold;
-            z-index: 1000;
+            z-index: 9999;
         }
-        #dolarContainer div {
-            margin-bottom: 5px;
+        #cotizacionesDolar div {
+            margin-bottom: 3px;
         }
     </style>
 </head>
@@ -126,8 +126,16 @@
 
 <div class="fondo"></div>
 
+<!-- Cartel de cotizaciones -->
+<div id="cotizacionesDolar">
+  <div>Oficial: Compra <span id="oficialCompra">...</span> | Venta <span id="oficialVenta">...</span></div>
+  <div>Blue: Compra <span id="blueCompra">...</span> | Venta <span id="blueVenta">...</span></div>
+</div>
+
 <div class="contenido">
+
     <div class="logo-bg">SEGURAL</div>
+
     <h1>SEGURAL</h1>
 
     <div class="buttons">
@@ -135,39 +143,33 @@
         <button onclick="location.href='trabajos.html'">🧰 TRABAJOS</button>
         <button onclick="location.href='clientes.html'">👤 CLIENTES</button>
     </div>
-</div>
 
-<!-- Cartel del Dólar -->
-<div id="dolarContainer">
-    <div>Dólar Oficial: <span id="dolarOficial">Cargando...</span></div>
-    <div>Dólar Blue: <span id="dolarBlue">Cargando...</span></div>
 </div>
 
 <script>
-    async function actualizarDolar() {
+    // Cotizaciones dólar
+    async function actualizarCotizaciones() {
         try {
-            // Dólar Oficial
-            const respuesta = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolaroficial');
-            const datos = await respuesta.json();
-            const oficial = datos.venta ? Number(datos.venta).toFixed(2) : "N/A";
+            const resOficial = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolaroficial');
+            const dataOficial = await resOficial.json();
+            const resBlue = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolarblue');
+            const dataBlue = await resBlue.json();
 
-            // Dólar Blue
-            const respuestaBlue = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolarblue');
-            const datosBlue = await respuestaBlue.json();
-            const blue = datosBlue.venta ? Number(datosBlue.venta).toFixed(2) : "N/A";
-
-            document.getElementById('dolarOficial').innerText = `$${oficial}`;
-            document.getElementById('dolarBlue').innerText = `$${blue}`;
-        } catch(e) {
-            console.error("Error al traer el dólar:", e);
-            document.getElementById('dolarOficial').innerText = "Error";
-            document.getElementById('dolarBlue').innerText = "Error";
+            document.getElementById('oficialCompra').innerText = dataOficial.compra ? `$${dataOficial.compra}` : 'N/A';
+            document.getElementById('oficialVenta').innerText = dataOficial.venta ? `$${dataOficial.venta}` : 'N/A';
+            document.getElementById('blueCompra').innerText = dataBlue.compra ? `$${dataBlue.compra}` : 'N/A';
+            document.getElementById('blueVenta').innerText = dataBlue.venta ? `$${dataBlue.venta}` : 'N/A';
+        } catch (err) {
+            console.error("Error al cargar cotizaciones:", err);
+            document.getElementById('oficialCompra').innerText = "Error";
+            document.getElementById('oficialVenta').innerText = "Error";
+            document.getElementById('blueCompra').innerText = "Error";
+            document.getElementById('blueVenta').innerText = "Error";
         }
     }
 
-    // Actualiza al cargar y cada 60 segundos
-    actualizarDolar();
-    setInterval(actualizarDolar, 60000);
+    actualizarCotizaciones(); // al cargar
+    setInterval(actualizarCotizaciones, 60000); // cada 60 segundos
 </script>
 
 </body>
