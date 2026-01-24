@@ -149,50 +149,40 @@
 </div>
 
 <script>
-    // Cotizaciones dólar con colores según suba o baja
+    // Cotizaciones dólar usando Dolarsi API
     let prevOficialCompra = 0, prevOficialVenta = 0, prevBlueCompra = 0, prevBlueVenta = 0;
 
     async function actualizarCotizaciones() {
         try {
-            const resOficial = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolaroficial');
-            const dataOficial = await resOficial.json();
-            const resBlue = await fetch('https://api-dolar-argentina.herokuapp.com/api/dolarblue');
-            const dataBlue = await resBlue.json();
+            const res = await fetch('https://www.dolarsi.com/api/api.php?type=valoresprincipales');
+            const data = await res.json();
 
-            const divs = [
-                { id: 'oficialCompra', value: Number(dataOficial.compra), prev: prevOficialCompra },
-                { id: 'oficialVenta', value: Number(dataOficial.venta), prev: prevOficialVenta },
-                { id: 'blueCompra', value: Number(dataBlue.compra), prev: prevBlueCompra },
-                { id: 'blueVenta', value: Number(dataBlue.venta), prev: prevBlueVenta },
-            ];
+            const oficial = data.find(d => d.casa.nombre.toLowerCase() === 'oficial');
+            const blue = data.find(d => d.casa.nombre.toLowerCase() === 'blue');
 
-            divs.forEach(d => {
-                const span = document.getElementById(d.id);
-                if (isNaN(d.value)) {
-                    span.innerText = "N/A";
+            function actualizarValor(id, valor, prev) {
+                const span = document.getElementById(id);
+                const num = Number(valor.replace(',','.')) || 0;
+                span.innerText = `$${num}`;
+                if (prev === 0) {
                     span.className = '';
+                } else if (num > prev) {
+                    span.className = 'sube';
+                } else if (num < prev) {
+                    span.className = 'baja';
                 } else {
-                    span.innerText = `$${d.value}`;
-                    if (d.prev === 0) {
-                        span.className = '';
-                    } else if (d.value > d.prev) {
-                        span.className = 'sube';
-                    } else if (d.value < d.prev) {
-                        span.className = 'baja';
-                    } else {
-                        span.className = '';
-                    }
+                    span.className = '';
                 }
-            });
+                return num;
+            }
 
-            // Guardar valores actuales
-            prevOficialCompra = Number(dataOficial.compra) || prevOficialCompra;
-            prevOficialVenta = Number(dataOficial.venta) || prevOficialVenta;
-            prevBlueCompra = Number(dataBlue.compra) || prevBlueCompra;
-            prevBlueVenta = Number(dataBlue.venta) || prevBlueVenta;
+            prevOficialCompra = actualizarValor('oficialCompra', oficial.casa.compra, prevOficialCompra);
+            prevOficialVenta = actualizarValor('oficialVenta', oficial.casa.venta, prevOficialVenta);
+            prevBlueCompra = actualizarValor('blueCompra', blue.casa.compra, prevBlueCompra);
+            prevBlueVenta = actualizarValor('blueVenta', blue.casa.venta, prevBlueVenta);
 
-        } catch (err) {
-            console.error("Error al cargar cotizaciones:", err);
+        } catch(err) {
+            console.error("Error al obtener cotizaciones:", err);
             ['oficialCompra','oficialVenta','blueCompra','blueVenta'].forEach(id=>{
                 document.getElementById(id).innerText="N/A";
                 document.getElementById(id).className='';
