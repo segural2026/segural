@@ -51,7 +51,7 @@
 <h1>📋 Lista general</h1>
 
 <h2>🧰 Trabajos</h2>
-<p class="total" id="totalTrabajos"></p>
+<p class="total" id="totalTrabajos">Cargando...</p>
 
 <table>
     <thead>
@@ -71,14 +71,32 @@
 
 <a href="index.html">⬅ Volver al inicio</a>
 
-<script>
-    let trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
-    const tabla = document.getElementById("tablaTrabajos");
-    const totalTrabajos = document.getElementById("totalTrabajos");
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+const firebaseConfig = {
+    apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+    authDomain: "segural.firebaseapp.com",
+    projectId: "segural",
+    storageBucket: "segural.firebasestorage.app",
+    messagingSenderId: "446640175127",
+    appId: "1:446640175127:web:479a11474a70be0d604452"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const tabla = document.getElementById("tablaTrabajos");
+const totalTrabajos = document.getElementById("totalTrabajos");
+
+async function cargarTrabajos() {
+    tabla.innerHTML = "";
     let totalGanancia = 0;
 
-    trabajos.forEach((trabajo, index) => {
+    const querySnapshot = await getDocs(collection(db, "trabajos"));
+    querySnapshot.forEach((docSnap) => {
+        const trabajo = { id: docSnap.id, ...docSnap.data() };
         const ingreso = Number(trabajo.monto);
         const gastos = Number(trabajo.gastos);
         const ganancia = ingreso - gastos;
@@ -93,19 +111,25 @@
             <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia}</td>
             <td>${trabajo.fecha}</td>
             <td>${trabajo.estado}</td>
-            <td><button onclick="eliminarTrabajo(${index})">Eliminar</button></td>
+            <td><button onclick="eliminarTrabajo('${trabajo.id}')">Eliminar</button></td>
         `;
         tabla.appendChild(fila);
     });
 
     totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia}`;
+}
 
-    function eliminarTrabajo(index) {
-        if (!confirm("¿Eliminar este trabajo?")) return;
-        trabajos.splice(index, 1);
-        localStorage.setItem("trabajos", JSON.stringify(trabajos));
-        location.reload();
+window.eliminarTrabajo = async function(id) {
+    if (!confirm("¿Eliminar este trabajo?")) return;
+    try {
+        await deleteDoc(doc(db, "trabajos", id));
+        await cargarTrabajos();
+    } catch (err) {
+        alert("Error eliminando trabajo: " + err.message);
     }
+};
+
+cargarTrabajos();
 </script>
 
 </body>
