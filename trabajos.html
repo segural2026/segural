@@ -2,115 +2,151 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Trabajos</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabajos - SEGURAL</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            background: #0f1e4a;
+            margin: 0;
             padding: 20px;
+            color: white;
         }
 
         h1 {
-            color: #1f3c88;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        form {
-            background: white;
+        .formulario {
+            max-width: 500px;
+            margin: auto;
+            background: rgba(255,255,255,0.1);
             padding: 20px;
-            border-radius: 8px;
-            max-width: 400px;
+            border-radius: 10px;
         }
 
         label {
             display: block;
-            margin-top: 10px;
+            margin-top: 12px;
             font-weight: bold;
         }
 
         input, select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin-top: 5px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
         }
 
         button {
-            margin-top: 15px;
-            padding: 10px;
             width: 100%;
-            background-color: #1f3c88;
-            color: white;
+            margin-top: 20px;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: bold;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            background: white;
+            color: #0f1e4a;
         }
 
         button:hover {
-            background-color: #162a5c;
+            opacity: 0.9;
         }
 
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #1f3c88;
+        .volver {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .volver a {
+            color: white;
+            text-decoration: underline;
         }
     </style>
 </head>
-
 <body>
 
-<h1>🧰 Nuevo trabajo</h1>
+<h1>🧰 Cargar trabajo</h1>
 
-<form id="formTrabajo">
-    <label>Descripción del trabajo</label>
-    <input type="text" id="descripcion" required>
+<div class="formulario">
 
-    <label>Cliente</label>
-    <input type="text" id="cliente" required>
+    <label>Nombre del trabajo</label>
+    <input type="text" id="nombreTrabajo" placeholder="Ej: Instalación de alarma">
 
     <label>Dinero cobrado</label>
-    <input type="number" id="monto" required>
+    <input type="number" id="montoTrabajo" placeholder="Ej: 50000">
 
     <label>Gastos del trabajo</label>
-    <input type="number" id="gastosTrabajo" placeholder="Ej: materiales, traslado">
+    <input type="number" id="gastosTrabajo" placeholder="Ej: 12000">
 
-    <label>Fecha</label>
-    <input type="date" id="fecha" required>
+    <label>Fecha del trabajo</label>
+    <input type="date" id="fechaTrabajo">
 
-    <label>Estado</label>
-    <select id="estado">
+    <label>Estado del trabajo</label>
+    <select id="estadoTrabajo">
         <option value="Pendiente">Pendiente</option>
         <option value="En proceso">En proceso</option>
         <option value="Finalizado">Finalizado</option>
     </select>
 
-    <button type="submit">Guardar trabajo</button>
-</form>
+    <!-- 🔹 NUEVO -->
+    <label>Dirección del cliente</label>
+    <input type="text" id="direccionCliente" placeholder="Ej: Av. San Martín 123">
 
-<a href="index.html">⬅ Volver al inicio</a>
+    <label>Número de teléfono</label>
+    <input type="tel" id="telefonoCliente" placeholder="Ej: 11 2345 6789">
+
+    <button onclick="guardarTrabajo()">Guardar trabajo</button>
+
+    <div class="volver">
+        <a href="index.html">⬅ Volver al inicio</a>
+    </div>
+
+</div>
 
 <script>
-    document.getElementById("formTrabajo").addEventListener("submit", function(e) {
-        e.preventDefault();
+function guardarTrabajo() {
+    const nombre = document.getElementById("nombreTrabajo").value;
+    const monto = document.getElementById("montoTrabajo").value;
+    const gastos = document.getElementById("gastosTrabajo").value;
+    const fecha = document.getElementById("fechaTrabajo").value;
+    const estado = document.getElementById("estadoTrabajo").value;
+    const direccion = document.getElementById("direccionCliente").value;
+    const telefono = document.getElementById("telefonoCliente").value;
 
-        const trabajo = {
-            descripcion: document.getElementById("descripcion").value,
-            cliente: document.getElementById("cliente").value,
-            monto: document.getElementById("monto").value,
-            gastos: document.getElementById("gastosTrabajo").value || 0,
-            fecha: document.getElementById("fecha").value,
-            estado: document.getElementById("estado").value
-        };
+    if (!nombre || !monto || !fecha) {
+        alert("Completá al menos nombre, monto y fecha");
+        return;
+    }
 
-        let trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
-        trabajos.push(trabajo);
-        localStorage.setItem("trabajos", JSON.stringify(trabajos));
+    const trabajo = {
+        nombre,
+        monto,
+        gastos: gastos || 0,
+        fecha,
+        estado,
+        direccion,
+        telefono
+    };
 
-        alert("✅ Trabajo guardado correctamente");
+    const trabajos = JSON.parse(localStorage.getItem("trabajos")) || [];
+    trabajos.push(trabajo);
+    localStorage.setItem("trabajos", JSON.stringify(trabajos));
 
-        document.getElementById("formTrabajo").reset();
-    });
+    alert("✅ Trabajo guardado");
+
+    document.getElementById("nombreTrabajo").value = "";
+    document.getElementById("montoTrabajo").value = "";
+    document.getElementById("gastosTrabajo").value = "";
+    document.getElementById("fechaTrabajo").value = "";
+    document.getElementById("direccionCliente").value = "";
+    document.getElementById("telefonoCliente").value = "";
+}
 </script>
 
 </body>
