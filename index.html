@@ -17,7 +17,6 @@
             color: white;
         }
 
-        /* Fondo con imagen */
         .fondo {
             position: fixed;
             top: 0;
@@ -33,13 +32,13 @@
             pointer-events: none;
         }
 
-        /* Contenido arriba del fondo */
         .contenido {
             position: relative;
             z-index: 2;
             text-align: center;
             padding: 20px;
             animation: aparecer 0.7s ease;
+            display: none;
         }
 
         .logo-bg {
@@ -87,6 +86,76 @@
             box-shadow: 0 14px 35px rgba(0,0,0,0.4);
         }
 
+        /* MODAL */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal {
+            background: #14255c;
+            padding: 30px;
+            border-radius: 14px;
+            text-align: center;
+            width: 90%;
+            max-width: 360px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: aparecer 0.4s ease;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 14px 44px 14px 14px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .modal button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            color: #0f1e4a;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+        }
+
         @keyframes aparecer {
             from {
                 opacity: 0;
@@ -97,23 +166,29 @@
                 transform: translateY(0);
             }
         }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 34px; }
-            .logo-bg { font-size: 80px; letter-spacing: 10px; }
-            .buttons button { font-size: 18px; padding: 18px 35px; }
-        }
     </style>
 </head>
 
 <body>
 
+<div class="overlay" id="overlay">
+    <div class="modal">
+        <h2>🔒 Acceso restringido</h2>
+
+        <div class="input-group">
+            <input type="password" id="clave" placeholder="Ingrese la clave">
+            <span class="toggle" onclick="toggleClave()">👁</span>
+        </div>
+
+        <button onclick="verificarClave()">Ingresar</button>
+        <div class="error" id="error">❌ Clave incorrecta</div>
+    </div>
+</div>
+
 <div class="fondo"></div>
 
-<div class="contenido">
-
+<div class="contenido" id="contenido">
     <div class="logo-bg">SEGURAL</div>
-
     <h1>SEGURAL</h1>
 
     <div class="buttons">
@@ -121,8 +196,34 @@
         <button onclick="location.href='trabajos.html'">🧰 TRABAJOS</button>
         <button onclick="location.href='clientes.html'">👤 CLIENTES</button>
     </div>
-
 </div>
+
+<script>
+    const claveCorrecta = "pandorasbox3060";
+
+    function verificarClave() {
+        const clave = document.getElementById("clave").value;
+
+        if (clave === claveCorrecta) {
+            document.getElementById("overlay").style.display = "none";
+            document.getElementById("contenido").style.display = "block";
+        } else {
+            document.getElementById("error").style.display = "block";
+        }
+    }
+
+    function toggleClave() {
+        const input = document.getElementById("clave");
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    // ENTER para ingresar
+    document.getElementById("clave").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            verificarClave();
+        }
+    });
+</script>
 
 </body>
 </html>
