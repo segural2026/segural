@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trabajos pendientes</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f4f6f9;padding:20px}
+    h1,h2{color:#1f3c88}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;background:#fff}
+    th,td{border:1px solid #ccc;padding:8px;text-align:center}
+    th{background:#1f3c88;color:#fff}
+    .total{font-weight:bold;margin:10px 0}
+    a{color:#1f3c88;text-decoration:none;font-weight:700}
+    a:hover{text-decoration:underline}
+
+    button{border:none;padding:6px 10px;cursor:pointer;border-radius:4px;font-weight:700}
+    .btn-mod{background:#1f3c88;color:#fff}
+    .btn-cancel{background:#777;color:#fff}
+    .btn-del{background:#c0392b;color:#fff}
+
+    .ganancia{font-weight:bold}
+    .positiva{color:green}
+    .negativa{color:red}
+
+    /* Modal */
+    #modalOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
+    #modal{max-width:520px;margin:40px auto;background:#fff;border-radius:10px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    #modal h3{margin:0 0 12px 0;color:#1f3c88}
+    .form-row{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:10px;text-align:left}
+    label{font-weight:800;color:#333}
+    input,select{padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+    #mEstadoOtroWrap{display:none}
+    .hint{font-size:12px;color:#666;margin-top:-6px;margin-bottom:10px}
+  </style>
+</head>
+<body>
+
+<h1>⏳ Trabajos pendientes</h1>
+<p class="total" id="infoPendientes">Cargando...</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Descripción</th>
+      <th>Cliente</th>
+      <th>Ingreso</th>
+      <th>Gastos</th>
+      <th>Ganancia</th>
+      <th>Fecha</th>
+      <th>Estado</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody id="tablaPendientes"></tbody>
+</table>
+
+<a href="index.html">⬅ Volver al inicio</a>
+
+<!-- MODAL (Modificar) -->
+<div id="modalOverlay">
+  <div id="modal">
+    <h3>✏️ Modificar trabajo</h3>
+
+    <div class="form-row">
+      <label for="mDescripcion">Descripción</label>
+      <input id="mDescripcion" type="text">
+    </div>
+
+    <div class="form-row">
+      <label for="mCliente">Cliente</label>
+      <input id="mCliente" type="text">
+    </div>
+
+    <div class="form-row">
+      <label for="mMonto">Ingreso ($)</label>
+      <input id="mMonto" type="number" step="1">
+    </div>
+
+    <div class="form-row">
+      <label for="mGastos">Gastos ($)</label>
+      <input id="mGastos" type="number" step="1">
+    </div>
+
+    <div class="form-row">
+      <label for="mFecha">Fecha</label>
+      <input id="mFecha" type="date">
+      <div class="hint">Se guarda como YYYY-MM-DD (ideal para ordenar).</div>
+    </div>
+
+    <div class="form-row">
+      <label for="mEstado">Estado</label>
+      <select id="mEstado">
+        <option value="Pendiente">Pendiente</option>
+        <option value="En proceso">En proceso</option>
+        <option value="Finalizado">Finalizado</option>
+        <option value="__otro__">Otro…</option>
+      </select>
+    </div>
+
+    <div class="form-row" id="mEstadoOtroWrap">
+      <label for="mEstadoOtro">Estado (Otro)</label>
+      <input id="mEstadoOtro" type="text" placeholder="Ej: Reprogramado / Cobrado">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-del" onclick="eliminarTrabajoActual()">Eliminar</button>
+      <button class="btn-mod" onclick="guardarCambios()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, deleteDoc, updateDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
+  authDomain: "segural.firebaseapp.com",
+  projectId: "segural",
+  storageBucket: "segural.firebasestorage.app",
+  messagingSenderId: "446640175127",
+  appId: "1:446640175127:web:479a11474a70be0d604452"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const tabla = document.getElementById("tablaPendientes");
+const infoPendientes = document.getElementById("infoPendientes");
+
+const overlay = document.getElementById("modalOverlay");
+const mDescripcion = document.getElementById("mDescripcion");
+const mCliente = document.getElementById("mCliente");
+const mMonto = document.getElementById("mMonto");
+const mGastos = document.getElementById("mGastos");
+const mFecha = document.getElementById("mFecha");
+const mEstado = document.getElementById("mEstado");
+const mEstadoOtroWrap = document.getElementById("mEstadoOtroWrap");
+const mEstadoOtro = document.getElementById("mEstadoOtro");
+
+let trabajosCache = {};
+let trabajoActualId = null;
+
+function normEstado(s){
+  return (s ?? "").toString().trim().toLowerCase();
+}
+
+function fechaToMs(fecha) {
+  if (!fecha) return 0;
+  if (typeof fecha === "object" && typeof fecha.toDate === "function") return fecha.toDate().getTime();
+  if (typeof fecha === "number") return fecha;
+  if (typeof fecha === "string") {
+    const ms = Date.parse(fecha.trim());
+    if (!Number.isNaN(ms)) return ms;
+  }
+  return 0;
+}
+
+function mostrarFecha(fecha) {
+  if (!fecha) return "";
+  if (typeof fecha === "object" && typeof fecha.toDate === "function") return fecha.toDate().toLocaleDateString("es-AR");
+  // si es ISO YYYY-MM-DD lo muestro como DD/MM/YYYY
+  const s = String(fecha);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return s;
+}
+
+function setEstadoUI(valor) {
+  const opciones = ["Pendiente", "En proceso", "Finalizado"];
+  if (opciones.includes(valor)) {
+    mEstado.value = valor;
+    mEstadoOtroWrap.style.display = "none";
+    mEstadoOtro.value = "";
+  } else {
+    mEstado.value = "__otro__";
+    mEstadoOtroWrap.style.display = "block";
+    mEstadoOtro.value = valor || "";
+  }
+}
+
+mEstado.addEventListener("change", () => {
+  if (mEstado.value === "__otro__") {
+    mEstadoOtroWrap.style.display = "block";
+    mEstadoOtro.focus();
+  } else {
+    mEstadoOtroWrap.style.display = "none";
+    mEstadoOtro.value = "";
+  }
+});
+
+window.abrirModal = function(id) {
+  const t = trabajosCache[id];
+  if (!t) return alert("No se encontró el trabajo.");
+  trabajoActualId = id;
+
+  mDescripcion.value = t.descripcion ?? "";
+  mCliente.value = t.cliente ?? "";
+  mMonto.value = Number(t.monto ?? 0);
+  mGastos.value = Number(t.gastos ?? 0);
+
+  // fecha -> input date (YYYY-MM-DD)
+  if (typeof t.fecha === "object" && t.fecha?.toDate) {
+    const d = t.fecha.toDate();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    mFecha.value = `${yyyy}-${mm}-${dd}`;
+  } else {
+    const s = (t.fecha ?? "").toString().trim();
+    // si ya viene ISO, ok
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) mFecha.value = s;
+    else mFecha.value = ""; // si no es ISO, que elija en calendario
+  }
+
+  setEstadoUI(t.estado ?? "");
+  overlay.style.display = "block";
+};
+
+window.cerrarModal = function() {
+  overlay.style.display = "none";
+  trabajoActualId = null;
+};
+
+window.guardarCambios = async function() {
+  if (!trabajoActualId) return;
+
+  const descripcion = mDescripcion.value.trim();
+  const cliente = mCliente.value.trim();
+  const monto = Number(mMonto.value);
+  const gastos = Number(mGastos.value);
+  const fecha = (mFecha.value || "").trim(); // YYYY-MM-DD
+
+  let estado = mEstado.value;
+  if (estado === "__otro__") estado = mEstadoOtro.value.trim();
+
+  if (!descripcion) return alert("Poné una descripción.");
+  if (!cliente) return alert("Poné el cliente.");
+  if (!fecha) return alert("Elegí una fecha.");
+  if (Number.isNaN(monto)) return alert("Ingreso inválido.");
+  if (Number.isNaN(gastos)) return alert("Gastos inválidos.");
+  if (!estado) return alert("Elegí o escribí un estado.");
+
+  try {
+    await updateDoc(doc(db, "trabajos", trabajoActualId), {
+      descripcion, cliente, monto, gastos, fecha, estado
+    });
+    cerrarModal();
+    await cargarPendientes();
+  } catch (err) {
+    alert("Error guardando cambios: " + err.message);
+  }
+};
+
+window.eliminarTrabajoActual = async function() {
+  if (!trabajoActualId) return;
+  if (!confirm("¿Eliminar este trabajo?")) return;
+
+  try {
+    await deleteDoc(doc(db, "trabajos", trabajoActualId));
+    cerrarModal();
+    await cargarPendientes();
+  } catch (err) {
+    alert("Error eliminando trabajo: " + err.message);
+  }
+};
+
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) cerrarModal();
+});
+
+async function cargarPendientes() {
+  tabla.innerHTML = "";
+  trabajosCache = {};
+
+  const snap = await getDocs(collection(db, "trabajos"));
+  const trabajos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // filtro PENDIENTE (tolerante a mayúsculas/minúsculas)
+  const pendientes = trabajos.filter(t => normEstado(t.estado) === "pendiente");
+
+  // ordenar por fecha: nuevo arriba
+  pendientes.sort((a,b) => fechaToMs(b.fecha) - fechaToMs(a.fecha));
+
+  let totalGanancia = 0;
+
+  pendientes.forEach(t => {
+    trabajosCache[t.id] = t;
+
+    const ingreso = Number(t.monto) || 0;
+    const gastos = Number(t.gastos) || 0;
+    const ganancia = ingreso - gastos;
+    totalGanancia += ganancia;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.descripcion ?? ""}</td>
+      <td>${t.cliente ?? ""}</td>
+      <td>$${ingreso.toLocaleString("es-AR")}</td>
+      <td>$${gastos.toLocaleString("es-AR")}</td>
+      <td class="ganancia ${ganancia >= 0 ? "positiva" : "negativa"}">$${ganancia.toLocaleString("es-AR")}</td>
+      <td>${mostrarFecha(t.fecha)}</td>
+      <td>${t.estado ?? ""}</td>
+      <td><button class="btn-mod" onclick="abrirModal('${t.id}')">Modificar</button></td>
+    `;
+    tabla.appendChild(tr);
+  });
+
+  infoPendientes.innerText =
+    `📌 Pendientes: ${pendientes.length} | 💰 Ganancia estimada: $${totalGanancia.toLocaleString("es-AR")}`;
+}
+
+cargarPendientes();
+</script>
+
+</body>
+</html>
