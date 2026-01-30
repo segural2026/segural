@@ -90,33 +90,89 @@ const db = getFirestore(app);
 const tabla = document.getElementById("tablaTrabajos");
 const totalTrabajos = document.getElementById("totalTrabajos");
 
+/**
+ * Convierte "fecha" a milisegundos para ordenar.
+ * Soporta:
+ * - Firestore Timestamp (tiene .toDate())
+ * - "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm"
+ * - "DD/MM/YYYY" o "DD/MM/YYYY HH:mm"
+ */
+function fechaToMs(fecha) {
+    if (!fecha) return 0;
+
+    // Firestore Timestamp
+    if (typeof fecha === "object" && typeof fecha.toDate === "function") {
+        return fecha.toDate().getTime();
+    }
+
+    // Si viene como número ya listo
+    if (typeof fecha === "number") return fecha;
+
+    // Strings
+    if (typeof fecha === "string") {
+        const s = fecha.trim();
+
+        // Formato DD/MM/YYYY (con o sin hora)
+        if (s.includes("/")) {
+            const [fechaParte, horaParte] = s.split(" ");
+            const [dd, mm, yyyy] = (fechaParte || "").split("/").map(n => parseInt(n, 10));
+
+            if (yyyy && mm && dd) {
+                let hh = 0, min = 0;
+                if (horaParte && horaParte.includes(":")) {
+                    const [h, m] = horaParte.split(":");
+                    hh = parseInt(h, 10) || 0;
+                    min = parseInt(m, 10) || 0;
+                }
+                return new Date(yyyy, mm - 1, dd, hh, min, 0, 0).getTime();
+            }
+        }
+
+        // ISO (YYYY-MM-DD o con hora)
+        const ms = Date.parse(s);
+        if (!Number.isNaN(ms)) return ms;
+    }
+
+    return 0;
+}
+
 async function cargarTrabajos() {
     tabla.innerHTML = "";
     let totalGanancia = 0;
 
     const querySnapshot = await getDocs(collection(db, "trabajos"));
-    querySnapshot.forEach((docSnap) => {
-        const trabajo = { id: docSnap.id, ...docSnap.data() };
-        const ingreso = Number(trabajo.monto);
-        const gastos = Number(trabajo.gastos);
+
+    // 1) Pasar a array
+    const trabajos = querySnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+    }));
+
+    // 2) ORDENAR: nuevo arriba (desc)
+    trabajos.sort((a, b) => fechaToMs(b.fecha) - fechaToMs(a.fecha));
+
+    // 3) Pintar tabla ya ordenada
+    trabajos.forEach((trabajo) => {
+        const ingreso = Number(trabajo.monto) || 0;
+        const gastos = Number(trabajo.gastos) || 0;
         const ganancia = ingreso - gastos;
         totalGanancia += ganancia;
 
         const fila = document.createElement("tr");
         fila.innerHTML = `
-            <td>${trabajo.descripcion}</td>
-            <td>${trabajo.cliente}</td>
-            <td>$${ingreso}</td>
-            <td>$${gastos}</td>
-            <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia}</td>
-            <td>${trabajo.fecha}</td>
-            <td>${trabajo.estado}</td>
+            <td>${trabajo.descripcion ?? ""}</td>
+            <td>${trabajo.cliente ?? ""}</td>
+            <td>$${ingreso.toLocaleString("es-AR")}</td>
+            <td>$${gastos.toLocaleString("es-AR")}</td>
+            <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia.toLocaleString("es-AR")}</td>
+            <td>${typeof trabajo.fecha === "object" && trabajo.fecha?.toDate ? trabajo.fecha.toDate().toLocaleDateString("es-AR") : (trabajo.fecha ?? "")}</td>
+            <td>${trabajo.estado ?? ""}</td>
             <td><button onclick="eliminarTrabajo('${trabajo.id}')">Eliminar</button></td>
         `;
         tabla.appendChild(fila);
     });
 
-    totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia}`;
+    totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia.toLocaleString("es-AR")}`;
 }
 
 window.eliminarTrabajo = async function(id) {
