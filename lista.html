@@ -9,9 +9,8 @@
             background-color: #f4f6f9;
             padding: 20px;
         }
-        h1, h2 {
-            color: #1f3c88;
-        }
+        h1, h2 { color: #1f3c88; }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -27,23 +26,71 @@
             background-color: #1f3c88;
             color: white;
         }
-        .total {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
+        .total { font-weight: bold; margin-bottom: 10px; }
+
         button {
-            background-color: #c0392b;
-            color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 6px 10px;
             cursor: pointer;
             border-radius: 4px;
+            font-weight: 600;
         }
-        .ganancia {
-            font-weight: bold;
-        }
+        .btn-mod { background-color: #1f3c88; color: white; }
+        .btn-cancel { background-color: #777; color: white; }
+        .btn-del { background-color: #c0392b; color: white; }
+
+        .ganancia { font-weight: bold; }
         .positiva { color: green; }
         .negativa { color: red; }
+
+        /* Modal */
+        #modalOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            padding: 20px;
+        }
+        #modal {
+            max-width: 520px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        #modal h3 {
+            margin: 0 0 12px 0;
+            color: #1f3c88;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        label { font-weight: 700; color: #333; }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: -6px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -71,9 +118,60 @@
 
 <a href="index.html">⬅ Volver al inicio</a>
 
+<!-- MODAL -->
+<div id="modalOverlay">
+    <div id="modal">
+        <h3>✏️ Modificar trabajo</h3>
+
+        <div class="form-row">
+            <label for="mDescripcion">Descripción</label>
+            <input id="mDescripcion" type="text" placeholder="Ej: Cambio de batería">
+        </div>
+
+        <div class="form-row">
+            <label for="mCliente">Cliente</label>
+            <input id="mCliente" type="text" placeholder="Ej: Juan Pérez">
+        </div>
+
+        <div class="form-row">
+            <label for="mMonto">Ingreso ($)</label>
+            <input id="mMonto" type="number" step="1" placeholder="Ej: 15000">
+        </div>
+
+        <div class="form-row">
+            <label for="mGastos">Gastos ($)</label>
+            <input id="mGastos" type="number" step="1" placeholder="Ej: 3000">
+        </div>
+
+        <div class="form-row">
+            <label for="mFecha">Fecha</label>
+            <input id="mFecha" type="text" placeholder="Ej: 2026-01-30 o 30/01/2026">
+            <div class="hint">Recomendado: YYYY-MM-DD para ordenar perfecto (ej: 2026-01-30)</div>
+        </div>
+
+        <div class="form-row">
+            <label for="mEstado">Estado</label>
+            <input id="mEstado" type="text" placeholder="Ej: Pendiente / Finalizado">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-del" onclick="eliminarTrabajoActual()">Eliminar</button>
+            <button class="btn-mod" onclick="guardarCambios()">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB44Lxe4w7xrHkz9dQZ4y8I6W_QnRbNxuU",
@@ -90,13 +188,17 @@ const db = getFirestore(app);
 const tabla = document.getElementById("tablaTrabajos");
 const totalTrabajos = document.getElementById("totalTrabajos");
 
-/**
- * Convierte "fecha" a milisegundos para ordenar.
- * Soporta:
- * - Firestore Timestamp (tiene .toDate())
- * - "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm"
- * - "DD/MM/YYYY" o "DD/MM/YYYY HH:mm"
- */
+const overlay = document.getElementById("modalOverlay");
+const mDescripcion = document.getElementById("mDescripcion");
+const mCliente = document.getElementById("mCliente");
+const mMonto = document.getElementById("mMonto");
+const mGastos = document.getElementById("mGastos");
+const mFecha = document.getElementById("mFecha");
+const mEstado = document.getElementById("mEstado");
+
+let trabajosCache = {};      // id -> trabajo
+let trabajoActualId = null;  // id que se está editando
+
 function fechaToMs(fecha) {
     if (!fecha) return 0;
 
@@ -104,19 +206,15 @@ function fechaToMs(fecha) {
     if (typeof fecha === "object" && typeof fecha.toDate === "function") {
         return fecha.toDate().getTime();
     }
-
-    // Si viene como número ya listo
     if (typeof fecha === "number") return fecha;
 
-    // Strings
     if (typeof fecha === "string") {
         const s = fecha.trim();
 
-        // Formato DD/MM/YYYY (con o sin hora)
+        // DD/MM/YYYY (con o sin hora)
         if (s.includes("/")) {
             const [fechaParte, horaParte] = s.split(" ");
             const [dd, mm, yyyy] = (fechaParte || "").split("/").map(n => parseInt(n, 10));
-
             if (yyyy && mm && dd) {
                 let hh = 0, min = 0;
                 if (horaParte && horaParte.includes(":")) {
@@ -136,57 +234,48 @@ function fechaToMs(fecha) {
     return 0;
 }
 
-async function cargarTrabajos() {
-    tabla.innerHTML = "";
-    let totalGanancia = 0;
-
-    const querySnapshot = await getDocs(collection(db, "trabajos"));
-
-    // 1) Pasar a array
-    const trabajos = querySnapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data()
-    }));
-
-    // 2) ORDENAR: nuevo arriba (desc)
-    trabajos.sort((a, b) => fechaToMs(b.fecha) - fechaToMs(a.fecha));
-
-    // 3) Pintar tabla ya ordenada
-    trabajos.forEach((trabajo) => {
-        const ingreso = Number(trabajo.monto) || 0;
-        const gastos = Number(trabajo.gastos) || 0;
-        const ganancia = ingreso - gastos;
-        totalGanancia += ganancia;
-
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-            <td>${trabajo.descripcion ?? ""}</td>
-            <td>${trabajo.cliente ?? ""}</td>
-            <td>$${ingreso.toLocaleString("es-AR")}</td>
-            <td>$${gastos.toLocaleString("es-AR")}</td>
-            <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia.toLocaleString("es-AR")}</td>
-            <td>${typeof trabajo.fecha === "object" && trabajo.fecha?.toDate ? trabajo.fecha.toDate().toLocaleDateString("es-AR") : (trabajo.fecha ?? "")}</td>
-            <td>${trabajo.estado ?? ""}</td>
-            <td><button onclick="eliminarTrabajo('${trabajo.id}')">Eliminar</button></td>
-        `;
-        tabla.appendChild(fila);
-    });
-
-    totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia.toLocaleString("es-AR")}`;
+function mostrarFecha(fecha) {
+    if (!fecha) return "";
+    if (typeof fecha === "object" && typeof fecha.toDate === "function") {
+        return fecha.toDate().toLocaleDateString("es-AR");
+    }
+    return String(fecha);
 }
 
-window.eliminarTrabajo = async function(id) {
-    if (!confirm("¿Eliminar este trabajo?")) return;
-    try {
-        await deleteDoc(doc(db, "trabajos", id));
-        await cargarTrabajos();
-    } catch (err) {
-        alert("Error eliminando trabajo: " + err.message);
-    }
+window.abrirModal = function(id) {
+    const t = trabajosCache[id];
+    if (!t) return alert("No se encontró el trabajo.");
+
+    trabajoActualId = id;
+
+    mDescripcion.value = t.descripcion ?? "";
+    mCliente.value = t.cliente ?? "";
+    mMonto.value = (t.monto ?? "") === "" ? "" : Number(t.monto);
+    mGastos.value = (t.gastos ?? "") === "" ? "" : Number(t.gastos);
+    mFecha.value = (typeof t.fecha === "object" && t.fecha?.toDate)
+        ? t.fecha.toDate().toISOString().slice(0,10) // si venía Timestamp, lo muestro YYYY-MM-DD
+        : (t.fecha ?? "");
+    mEstado.value = t.estado ?? "";
+
+    overlay.style.display = "block";
 };
 
-cargarTrabajos();
-</script>
+window.cerrarModal = function() {
+    overlay.style.display = "none";
+    trabajoActualId = null;
+};
 
-</body>
-</html>
+window.guardarCambios = async function() {
+    if (!trabajoActualId) return;
+
+    const descripcion = mDescripcion.value.trim();
+    const cliente = mCliente.value.trim();
+    const monto = Number(mMonto.value);
+    const gastos = Number(mGastos.value);
+    const fecha = mFecha.value.trim();
+    const estado = mEstado.value.trim();
+
+    if (!descripcion) return alert("Poné una descripción.");
+    if (!cliente) return alert("Poné el cliente.");
+    if (!fecha) return alert("Poné una fecha.");
+    if (Number.isNaN(monto)) return
