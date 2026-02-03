@@ -65,6 +65,63 @@
     .mes-row .mes-ganancia.positiva{ color: #1b7f2a; }
     .mes-row .mes-ganancia.negativa{ color: #b00020; }
 
+    /* ✅ Bloque de info mensual */
+    .mes-subinfo{
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+      font-weight: 700;
+      color: #1f3c88;
+    }
+    .mes-subline{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-weight: 800;
+    }
+    .mes-subline .label{
+      opacity: .95;
+    }
+    .mes-subline .value{
+      font-weight: 900;
+    }
+    .mes-subline .value.negativa{ color:#b00020; }
+    .mes-subline .value.positiva{ color:#1b7f2a; }
+
+    /* ✅ Botón plegable */
+    .btn-toggle{
+      background: #1f3c88;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 12px;
+      width: fit-content;
+    }
+    .btn-toggle:hover{ opacity: .92; }
+
+    .mes-fixed-details{
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.7);
+      border: 1px dashed rgba(31,60,136,.25);
+      display: grid;
+      gap: 6px;
+      font-weight: 600;
+      color: #274bb0;
+    }
+    .fixed-item{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      opacity: .95;
+    }
+    .hidden{ display:none !important; }
+
     /* ✅ Estados tipo "chip" */
     .estado-chip{
       display: inline-block;
@@ -271,13 +328,21 @@ const mEstadoOtro = document.getElementById("mEstadoOtro");
 let trabajosCache = {};
 let trabajoActualId = null;
 
+/* ✅ Gastos fijos mensuales */
+const GASTOS_FIJOS_MENSUALES = [
+  { nombre: "Seguro Kangoo", monto: 56000 },
+  { nombre: "Seguro personal Trabajo", monto: 47000 },
+  { nombre: "Cuota social", monto: 24000 },
+  { nombre: "Seguro Fiat punto", monto: 472300 },
+  { nombre: "Pago mensual Kangoo 0km", monto: 428000 },
+  { nombre: "Monotributo", monto: 131000 }
+];
+const TOTAL_GASTOS_FIJOS = GASTOS_FIJOS_MENSUALES.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
+
 function fechaToMs(fecha) {
   if (!fecha) return 0;
-  if (typeof fecha === "object" && typeof fecha.toDate === "function") {
-    return fecha.toDate().getTime();
-  }
+  if (typeof fecha === "object" && typeof fecha.toDate === "function") return fecha.toDate().getTime();
   if (typeof fecha === "number") return fecha;
-
   if (typeof fecha === "string") {
     const s = fecha.trim();
     if (s.includes("/")) {
@@ -293,30 +358,22 @@ function fechaToMs(fecha) {
 function isoToEsAR(iso) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!m) return iso;
-  const yyyy = m[1], mm = m[2], dd = m[3];
-  return `${dd}/${mm}/${yyyy}`;
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function mostrarFecha(fecha) {
   if (!fecha) return "";
-  if (typeof fecha === "object" && typeof fecha.toDate === "function") {
-    const d = fecha.toDate();
-    return d.toLocaleDateString("es-AR");
-  }
+  if (typeof fecha === "object" && typeof fecha.toDate === "function") return fecha.toDate().toLocaleDateString("es-AR");
   if (typeof fecha === "string") return isoToEsAR(fecha);
   return String(fecha);
 }
 
 function claveMes(fecha) {
   if (!fecha) return "Sin fecha";
-
   if (typeof fecha === "object" && typeof fecha.toDate === "function") {
     const d = fecha.toDate();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${yyyy}-${mm}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
-
   if (typeof fecha === "string") {
     const s = fecha.trim();
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -324,14 +381,10 @@ function claveMes(fecha) {
     const m2 = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
     if (m2) return `${m2[3]}-${m2[2]}`;
   }
-
   if (typeof fecha === "number") {
     const d = new Date(fecha);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${yyyy}-${mm}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
-
   return "Sin fecha";
 }
 
@@ -339,8 +392,7 @@ const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto"
 function tituloMes(key) {
   if (key === "Sin fecha") return "Sin fecha";
   const [yyyy, mm] = key.split("-");
-  const name = MESES[Number(mm) - 1] || "Mes";
-  return `${name} ${yyyy}`;
+  return `${MESES[Number(mm) - 1] || "Mes"} ${yyyy}`;
 }
 
 function fmtARS(n) {
@@ -348,7 +400,6 @@ function fmtARS(n) {
   return `$${val.toLocaleString("es-AR")}`;
 }
 
-/* ✅ NUEVO: convertir estado a CHIP (pendiente/finalizado/adelanto/proceso/otro) */
 function estadoChipHTML(estadoRaw) {
   const e = (estadoRaw ?? "").toString().trim();
   const low = e.toLowerCase();
@@ -359,9 +410,18 @@ function estadoChipHTML(estadoRaw) {
   else if (low.includes("adel")) cls = "estado-adelanto";
   else if (low.includes("proceso") || low.includes("progreso") || low.includes("en proceso")) cls = "estado-proceso";
 
-  const safeText = e || "—";
-  return `<span class="estado-chip ${cls}">${safeText}</span>`;
+  return `<span class="estado-chip ${cls}">${e || "—"}</span>`;
 }
+
+/* ✅ NUEVO: plegar/desplegar detalle gastos */
+window.toggleDetallesGastos = function(keyMes) {
+  const panel = document.getElementById(`detalles-${keyMes}`);
+  const btn = document.getElementById(`btn-detalles-${keyMes}`);
+  if (!panel || !btn) return;
+
+  const hidden = panel.classList.toggle("hidden");
+  btn.textContent = hidden ? "Ver detalle" : "Ocultar detalle";
+};
 
 function setEstadoUI(valor) {
   const opciones = ["Pendiente", "En proceso", "Finalizado"];
@@ -389,7 +449,6 @@ mEstado.addEventListener("change", () => {
 window.abrirModal = function(id) {
   const t = trabajosCache[id];
   if (!t) return alert("No se encontró el trabajo.");
-
   trabajoActualId = id;
 
   mDescripcion.value = t.descripcion ?? "";
@@ -399,10 +458,7 @@ window.abrirModal = function(id) {
 
   if (typeof t.fecha === "object" && t.fecha?.toDate) {
     const d = t.fecha.toDate();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    mFecha.value = `${yyyy}-${mm}-${dd}`;
+    mFecha.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   } else {
     const s = (t.fecha ?? "").toString().trim();
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
@@ -442,15 +498,7 @@ window.guardarCambios = async function() {
   if (!estado) return alert("Elegí o escribí un estado.");
 
   try {
-    await updateDoc(doc(db, "trabajos", trabajoActualId), {
-      descripcion,
-      cliente,
-      monto,
-      gastos,
-      fecha,
-      estado
-    });
-
+    await updateDoc(doc(db, "trabajos", trabajoActualId), { descripcion, cliente, monto, gastos, fecha, estado });
     cerrarModal();
     await cargarTrabajos();
   } catch (err) {
@@ -477,11 +525,7 @@ async function cargarTrabajos() {
   trabajosCache = {};
 
   const querySnapshot = await getDocs(collection(db, "trabajos"));
-
-  const trabajos = querySnapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  }));
+  const trabajos = querySnapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 
   trabajos.sort((a, b) => {
     const diff = fechaToMs(b.fecha) - fechaToMs(a.fecha);
@@ -489,7 +533,7 @@ async function cargarTrabajos() {
     return String(b.id).localeCompare(String(a.id));
   });
 
-  // ganancia por mes
+  // ganancia por mes (solo trabajos)
   const gananciaPorMes = {};
   trabajos.forEach((t) => {
     const ingreso = Number(t.monto) || 0;
@@ -515,7 +559,15 @@ async function cargarTrabajos() {
       mesActual = keyMes;
 
       const totalMes = gananciaPorMes[keyMes] || 0;
-      const claseMes = totalMes >= 0 ? "positiva" : "negativa";
+      const gastosFijosMes = (keyMes === "Sin fecha") ? 0 : TOTAL_GASTOS_FIJOS;
+      const netoMes = totalMes - gastosFijosMes;
+
+      const claseGanMes = totalMes >= 0 ? "positiva" : "negativa";
+      const claseNetoMes = netoMes >= 0 ? "positiva" : "negativa";
+
+      // keyMes tiene guion: "2026-02" => id seguro "2026-02"
+      const detalleId = `detalles-${keyMes}`;
+      const btnId = `btn-detalles-${keyMes}`;
 
       const filaMes = document.createElement("tr");
       filaMes.className = "mes-row";
@@ -523,8 +575,32 @@ async function cargarTrabajos() {
         <td colspan="8">
           <div class="mes-wrap">
             <span>📅 ${tituloMes(keyMes)}</span>
-            <span class="mes-ganancia ${claseMes}">Ganancia: ${fmtARS(totalMes)}</span>
+            <span class="mes-ganancia ${claseGanMes}">Ganancia: ${fmtARS(totalMes)}</span>
           </div>
+
+          ${keyMes === "Sin fecha" ? "" : `
+            <div class="mes-subinfo">
+              <div class="mes-subline">
+                <span class="label">Gastos fijos del mes:</span>
+                <span class="value negativa">-${fmtARS(gastosFijosMes)}</span>
+              </div>
+              <div class="mes-subline">
+                <span class="label">Neto del mes:</span>
+                <span class="value ${claseNetoMes}">${fmtARS(netoMes)}</span>
+              </div>
+
+              <button class="btn-toggle" id="${btnId}" onclick="toggleDetallesGastos('${keyMes}')">Ver detalle</button>
+
+              <div class="mes-fixed-details hidden" id="${detalleId}">
+                ${GASTOS_FIJOS_MENSUALES.map(it => `
+                  <div class="fixed-item">
+                    <span>${it.nombre}</span>
+                    <span>-${fmtARS(it.monto)}</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `}
         </td>
       `;
       tabla.appendChild(filaMes);
@@ -544,7 +620,7 @@ async function cargarTrabajos() {
     tabla.appendChild(fila);
   });
 
-  totalTrabajos.innerText = `💰 Ganancia total de trabajos: ${fmtARS(totalGanancia)}`;
+  totalTrabajos.innerText = `💰 Ganancia total de trabajos: ${fmtARS(totalGanancia)} — Gastos fijos mensuales: ${fmtARS(TOTAL_GASTOS_FIJOS)}`;
 }
 
 overlay.addEventListener("click", (e) => {
