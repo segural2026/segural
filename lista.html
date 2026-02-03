@@ -43,6 +43,65 @@
     .positiva { color: green; }
     .negativa { color: red; }
 
+    /* ✅ Separador de mes */
+    .mes-row td{
+      background: #e9eefc;
+      color: #1f3c88;
+      font-weight: 800;
+      text-align: left;
+      padding: 10px 12px;
+      letter-spacing: .2px;
+    }
+    .mes-row .mes-wrap{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .mes-row .mes-ganancia{
+      font-weight: 900;
+    }
+    .mes-row .mes-ganancia.positiva{ color: #1b7f2a; }
+    .mes-row .mes-ganancia.negativa{ color: #b00020; }
+
+    /* ✅ Estados tipo "chip" */
+    .estado-chip{
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: .2px;
+      border: 1px solid rgba(0,0,0,.08);
+      white-space: nowrap;
+    }
+    .estado-pendiente{
+      background: #fff3cd;
+      color: #7a5a00;
+      border-color: #ffe69c;
+    }
+    .estado-proceso{
+      background: #e7f1ff;
+      color: #0b4aa2;
+      border-color: #cfe2ff;
+    }
+    .estado-finalizado{
+      background: #d1e7dd;
+      color: #0f5132;
+      border-color: #badbcc;
+    }
+    .estado-adelanto{
+      background: #f3e8ff;
+      color: #5b21b6;
+      border-color: #e9d5ff;
+    }
+    .estado-otro{
+      background: #f1f3f5;
+      color: #495057;
+      border-color: #dee2e6;
+    }
+
     /* Modal */
     #modalOverlay {
       display: none;
@@ -146,7 +205,6 @@
 
     <div class="form-row">
       <label for="mFecha">Fecha</label>
-      <!-- Calendario -->
       <input id="mFecha" type="date">
       <div class="hint">Se guarda automáticamente como YYYY-MM-DD (ideal para ordenar).</div>
     </div>
@@ -163,7 +221,7 @@
 
     <div class="form-row" id="mEstadoOtroWrap">
       <label for="mEstadoOtro">Estado (Otro)</label>
-      <input id="mEstadoOtro" type="text" placeholder="Ej: Reprogramado / Entregado / Cobrado">
+      <input id="mEstadoOtro" type="text" placeholder="Ej: Adelanto / Entregado / Cobrado">
     </div>
 
     <div class="modal-actions">
@@ -210,38 +268,29 @@ const mEstado = document.getElementById("mEstado");
 const mEstadoOtroWrap = document.getElementById("mEstadoOtroWrap");
 const mEstadoOtro = document.getElementById("mEstadoOtro");
 
-let trabajosCache = {};      // id -> trabajo
-let trabajoActualId = null;  // id que se está editando
+let trabajosCache = {};
+let trabajoActualId = null;
 
 function fechaToMs(fecha) {
   if (!fecha) return 0;
-
-  // Firestore Timestamp
   if (typeof fecha === "object" && typeof fecha.toDate === "function") {
     return fecha.toDate().getTime();
   }
-
   if (typeof fecha === "number") return fecha;
 
   if (typeof fecha === "string") {
     const s = fecha.trim();
-
-    // DD/MM/YYYY
     if (s.includes("/")) {
       const [dd, mm, yyyy] = s.split("/").map(n => parseInt(n, 10));
       if (yyyy && mm && dd) return new Date(yyyy, mm - 1, dd).getTime();
     }
-
-    // ISO (YYYY-MM-DD)
     const ms = Date.parse(s);
     if (!Number.isNaN(ms)) return ms;
   }
-
   return 0;
 }
 
 function isoToEsAR(iso) {
-  // iso: YYYY-MM-DD
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!m) return iso;
   const yyyy = m[1], mm = m[2], dd = m[3];
@@ -258,8 +307,63 @@ function mostrarFecha(fecha) {
   return String(fecha);
 }
 
+function claveMes(fecha) {
+  if (!fecha) return "Sin fecha";
+
+  if (typeof fecha === "object" && typeof fecha.toDate === "function") {
+    const d = fecha.toDate();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${yyyy}-${mm}`;
+  }
+
+  if (typeof fecha === "string") {
+    const s = fecha.trim();
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m) return `${m[1]}-${m[2]}`;
+    const m2 = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
+    if (m2) return `${m2[3]}-${m2[2]}`;
+  }
+
+  if (typeof fecha === "number") {
+    const d = new Date(fecha);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${yyyy}-${mm}`;
+  }
+
+  return "Sin fecha";
+}
+
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function tituloMes(key) {
+  if (key === "Sin fecha") return "Sin fecha";
+  const [yyyy, mm] = key.split("-");
+  const name = MESES[Number(mm) - 1] || "Mes";
+  return `${name} ${yyyy}`;
+}
+
+function fmtARS(n) {
+  const val = Number(n) || 0;
+  return `$${val.toLocaleString("es-AR")}`;
+}
+
+/* ✅ NUEVO: convertir estado a CHIP (pendiente/finalizado/adelanto/proceso/otro) */
+function estadoChipHTML(estadoRaw) {
+  const e = (estadoRaw ?? "").toString().trim();
+  const low = e.toLowerCase();
+
+  let cls = "estado-otro";
+  if (low.includes("pend")) cls = "estado-pendiente";
+  else if (low.includes("final")) cls = "estado-finalizado";
+  else if (low.includes("adel")) cls = "estado-adelanto";
+  else if (low.includes("proceso") || low.includes("progreso") || low.includes("en proceso")) cls = "estado-proceso";
+
+  const safeText = e || "—";
+  return `<span class="estado-chip ${cls}">${safeText}</span>`;
+}
+
 function setEstadoUI(valor) {
-  // Si coincide con opciones, lo selecciona; si no, cae a "Otro"
   const opciones = ["Pendiente", "En proceso", "Finalizado"];
   if (opciones.includes(valor)) {
     mEstado.value = valor;
@@ -293,7 +397,6 @@ window.abrirModal = function(id) {
   mMonto.value = (t.monto ?? "") === "" ? "" : Number(t.monto);
   mGastos.value = (t.gastos ?? "") === "" ? "" : Number(t.gastos);
 
-  // Fecha: si viene Timestamp => lo paso a YYYY-MM-DD para el input date
   if (typeof t.fecha === "object" && t.fecha?.toDate) {
     const d = t.fecha.toDate();
     const yyyy = d.getFullYear();
@@ -301,19 +404,16 @@ window.abrirModal = function(id) {
     const dd = String(d.getDate()).padStart(2, "0");
     mFecha.value = `${yyyy}-${mm}-${dd}`;
   } else {
-    // si ya es string ISO YYYY-MM-DD, perfecto
-    // si fuera DD/MM/YYYY, intento convertirlo
     const s = (t.fecha ?? "").toString().trim();
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
       const [dd, mm, yyyy] = s.split("/");
       mFecha.value = `${yyyy}-${mm}-${dd}`;
     } else {
-      mFecha.value = s; // idealmente ISO
+      mFecha.value = s;
     }
   }
 
   setEstadoUI(t.estado ?? "");
-
   overlay.style.display = "block";
 };
 
@@ -329,8 +429,6 @@ window.guardarCambios = async function() {
   const cliente = mCliente.value.trim();
   const monto = Number(mMonto.value);
   const gastos = Number(mGastos.value);
-
-  // type="date" devuelve YYYY-MM-DD
   const fecha = (mFecha.value || "").trim();
 
   let estado = mEstado.value;
@@ -349,7 +447,7 @@ window.guardarCambios = async function() {
       cliente,
       monto,
       gastos,
-      fecha,   // se guarda ISO YYYY-MM-DD
+      fecha,
       estado
     });
 
@@ -385,12 +483,23 @@ async function cargarTrabajos() {
     ...docSnap.data()
   }));
 
-  // Orden: nuevo arriba
   trabajos.sort((a, b) => {
     const diff = fechaToMs(b.fecha) - fechaToMs(a.fecha);
     if (diff !== 0) return diff;
-    return String(b.id).localeCompare(String(a.id)); // desempate estable
+    return String(b.id).localeCompare(String(a.id));
   });
+
+  // ganancia por mes
+  const gananciaPorMes = {};
+  trabajos.forEach((t) => {
+    const ingreso = Number(t.monto) || 0;
+    const gastos = Number(t.gastos) || 0;
+    const g = ingreso - gastos;
+    const k = claveMes(t.fecha);
+    gananciaPorMes[k] = (gananciaPorMes[k] || 0) + g;
+  });
+
+  let mesActual = null;
 
   trabajos.forEach((trabajo) => {
     trabajosCache[trabajo.id] = trabajo;
@@ -400,24 +509,44 @@ async function cargarTrabajos() {
     const ganancia = ingreso - gastos;
     totalGanancia += ganancia;
 
+    const keyMes = claveMes(trabajo.fecha);
+
+    if (keyMes !== mesActual) {
+      mesActual = keyMes;
+
+      const totalMes = gananciaPorMes[keyMes] || 0;
+      const claseMes = totalMes >= 0 ? "positiva" : "negativa";
+
+      const filaMes = document.createElement("tr");
+      filaMes.className = "mes-row";
+      filaMes.innerHTML = `
+        <td colspan="8">
+          <div class="mes-wrap">
+            <span>📅 ${tituloMes(keyMes)}</span>
+            <span class="mes-ganancia ${claseMes}">Ganancia: ${fmtARS(totalMes)}</span>
+          </div>
+        </td>
+      `;
+      tabla.appendChild(filaMes);
+    }
+
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td>${trabajo.descripcion ?? ""}</td>
       <td>${trabajo.cliente ?? ""}</td>
-      <td>$${ingreso.toLocaleString("es-AR")}</td>
-      <td>$${gastos.toLocaleString("es-AR")}</td>
-      <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">$${ganancia.toLocaleString("es-AR")}</td>
+      <td>${fmtARS(ingreso)}</td>
+      <td>${fmtARS(gastos)}</td>
+      <td class="ganancia ${ganancia >= 0 ? 'positiva' : 'negativa'}">${fmtARS(ganancia)}</td>
       <td>${mostrarFecha(trabajo.fecha)}</td>
-      <td>${trabajo.estado ?? ""}</td>
+      <td>${estadoChipHTML(trabajo.estado)}</td>
       <td><button class="btn-mod" onclick="abrirModal('${trabajo.id}')">Modificar</button></td>
     `;
     tabla.appendChild(fila);
   });
 
-  totalTrabajos.innerText = `💰 Ganancia total de trabajos: $${totalGanancia.toLocaleString("es-AR")}`;
+  totalTrabajos.innerText = `💰 Ganancia total de trabajos: ${fmtARS(totalGanancia)}`;
 }
 
-// Cerrar modal tocando afuera
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) cerrarModal();
 });
